@@ -7,4 +7,5 @@ fn main() {
     chap4::main13();
     chap4::main21();
     chap4::main22();
+    chap4::main31();
 }

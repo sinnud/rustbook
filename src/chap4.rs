@@ -99,3 +99,28 @@ pub fn main22() {
 fn change(some_string: &mut String) {
     some_string.push_str(", world");
 }
+pub fn main31() {
+    let mut s = String::from("hello world");
+
+    let idx = first_word(&s); // word will get the value 5
+
+    let first_word=&s[0..idx];
+    let rest_words=&s[(idx+1)..s.len()];
+    println!("'{}' has first word '{}' and rest words '{}'", s, first_word, rest_words);
+    s.clear(); // this empties the String, making it equal to ""
+    //println!("After clear, the first word '{}' and rest words '{}'", first_word, rest_words);
+
+    // word still has the value 5 here, but there's no more string that
+    // we could meaningfully use the value 5 with. word is now totally invalid!
+}
+fn first_word(s: &String) -> usize {
+    let bytes = s.as_bytes();
+
+    for (i, &item) in bytes.iter().enumerate() {
+        if item == b' ' {
+            return i;
+        }
+    }
+
+    s.len()
+}

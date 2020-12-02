@@ -2,7 +2,8 @@
 // mod chap4;
 // mod chap5;
 // mod chap6;
-mod chap7;
+// mod chap7;
+mod chap8;
 fn main() {
     //chap2::main();
     // chap4::main11();
@@ -21,5 +22,8 @@ fn main() {
     // chap6::main11();
     // chap6::main12();
     // chap6::main31();
-    chap7::main();
+    // chap7::main();
+    chap8::main11();
+    chap8::main21();
+    chap8::main31();
 }

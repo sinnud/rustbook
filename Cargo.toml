@@ -11,3 +11,5 @@ edition = "2018"
 # rand = "0.6.0" 
 # chap7.rs
 # restaurant = {path = "libs/restaurant"}
+# chap8 exercise
+quickersort = "3.0.1"

@@ -3,7 +3,8 @@
 // mod chap5;
 // mod chap6;
 // mod chap7;
-mod chap8;
+// mod chap8;
+mod chap9;
 fn main() {
     //chap2::main();
     // chap4::main11();
@@ -28,7 +29,11 @@ fn main() {
     // chap8::main31();
     // c8ex1();
     // c8ex2();
-    c8ex3();
+    // c8ex3();
+    //chap9::main21();
+    //chap9::main22();
+    //chap9::main23();
+    chap9::main24();
 }
 /*
 fn c8ex1(){
@@ -55,7 +60,7 @@ fn c8ex2(){
     let t = chap8::c8ex2(s);
     println!("The resultant string is '{}'", t);
 }
-*/
+
 fn c8ex3(){
     // Using a hash map and vectors, create a text interface
     // to allow a user to add employee names to a department
@@ -65,3 +70,4 @@ fn c8ex3(){
     // the company by department, sorted alphabetically.
     chap8::c8ex3();
 }
+*/

@@ -13,3 +13,10 @@ Each chapater has its own .rs file.
 |chap7| modules|
 |chap8| vector, string, and dictionary (haskmap)|
 |chap9| error handling|
+|chap10| generic type, trait, lifetime|
+
+
+##English
+| symbols| name   |
+| :      | colon  |
+| <>     | angle brackets|

@@ -1,6 +1,6 @@
-# for chap 7
+# for chap 11
 [package]
-name = "restaurant"
+name = "adder"
 version = "0.1.0"
 authors = ["Luke Du <sinnud@gmail.com>"]
 edition = "2018"

@@ -10,13 +10,14 @@ Each chapater has its own .rs file.
 |chap4| Ownership|
 |chap5| structure and its implementation|
 |chap6| enums, with outside code examples|
-|chap7| modules|
+|chap7| modules (use libs/restaurant)|
 |chap8| vector, string, and dictionary (haskmap)|
 |chap9| error handling|
 |chap10| generic type, trait, lifetime|
+|chap11| test (use libs/adder)|
 
-
-##English
+## English
 | symbols| name   |
+| -      | -      |
 | :      | colon  |
 | <>     | angle brackets|

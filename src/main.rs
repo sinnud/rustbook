@@ -5,7 +5,7 @@
 // mod chap7;
 // mod chap8;
 // mod chap9;
-mod chap10;
+// mod chap10;
 fn main() {
     //chap2::main();
     // chap4::main11();
@@ -35,20 +35,20 @@ fn main() {
     //chap9::main22();
     //chap9::main23();
     // chap9::main24();
-    chap10::main01();
-    chap10::main02();
-    chap10::main11();
-    // chap10::main12();
-    chap10::main13();
-    chap10::main14();
-    chap10::main15();
-    chap10::main16();
-    chap10::main21();
-    chap10::main22();
-    chap10::main31();
-    chap10::main32();
-    chap10::main33();
-    chap10::main34();
+    // chap10::main01();
+    // chap10::main02();
+    // chap10::main11();
+    // // chap10::main12();
+    // chap10::main13();
+    // chap10::main14();
+    // chap10::main15();
+    // chap10::main16();
+    // chap10::main21();
+    // chap10::main22();
+    // chap10::main31();
+    // chap10::main32();
+    // chap10::main33();
+    // chap10::main34();
 }
 /*
 fn c8ex1(){

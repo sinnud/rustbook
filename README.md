@@ -14,7 +14,7 @@ Each chapater has its own .rs file.
 |chap8| vector, string, and dictionary (haskmap)|
 |chap9| error handling|
 |chap10| generic type, trait, lifetime|
-|chap11| test (use libs/adder)|
+|chap11| test (use libs/adder and src/lib12.rs with special lines in Cargo.toml)|
 
 ## English
 | symbols| name   |
@@ -23,3 +23,4 @@ Each chapater has its own .rs file.
 | <>     | angle brackets|
 | \|     | vertical pipe|
 | &      | ampersand|
+| {}     | curly brackets|

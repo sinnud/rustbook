@@ -13,3 +13,8 @@ edition = "2018"
 # restaurant = {path = "libs/restaurant"}
 # chap8 exercise
 # quickersort = "3.0.1"
+
+# chap12.rs use lib12.rs
+[lib]
+name="rustbook"
+path="src/lib12.rs"

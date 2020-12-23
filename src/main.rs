@@ -6,6 +6,7 @@
 // mod chap8;
 // mod chap9;
 // mod chap10;
+mod chap12;
 fn main() {
     //chap2::main();
     // chap4::main11();
@@ -49,6 +50,14 @@ fn main() {
     // chap10::main32();
     // chap10::main33();
     // chap10::main34();
+    // chap12::main11();
+    // chap12::main31();
+    // chap12::main32();
+    // chap12::main33();
+    // chap12::main34();
+    // chap12::main35();
+    // chap12::main36();
+    chap12::main61();
 }
 /*
 fn c8ex1(){

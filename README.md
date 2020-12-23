@@ -21,3 +21,5 @@ Each chapater has its own .rs file.
 | -      | -      |
 | :      | colon  |
 | <>     | angle brackets|
+| \|     | vertical pipe|
+| &      | ampersand|

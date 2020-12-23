@@ -1,3 +1,0 @@
-sue:Math
-luke:math
-Luke:Math

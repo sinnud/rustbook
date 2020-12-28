@@ -4,17 +4,8 @@ version = "0.1.0"
 authors = ["Luke Du <sinnud@gmail.com>"]
 edition = "2018"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [dependencies]
-# chap2.rs
-# rand = "0.6.0" 
-# chap7.rs
-# restaurant = {path = "libs/restaurant"}
-# chap8 exercise
-# quickersort = "3.0.1"
-
-# chap12.rs use lib12.rs
-#[lib]
-#name="rustbook"
-#path="src/lib12.rs"
+postgres = "0.19.0"          # connect to postgresql
+percent-encoding = "2.1.0"   # URL encoding
+chrono = "0.4.19"            # SystemTime format to string
+walkdir = "2.3.1"            # get all files under folder including sub-folder

@@ -1,57 +1,34 @@
-
-use postgresql::{PostgreSQL, FileStatus};
+mod lib_pg;
+use crate::lib_pg::PostgreSQL;
+mod lib_fs;
+#[allow(unused_imports)]
+use crate::lib_fs::FileStatus;
 fn main()-> Result<(), &'static str>{
-    // let mut wd = PostgreSQL::default();
-    let mut wd = match PostgreSQL::new("192.168.1.213".to_owned(),
-        "sinnud".to_owned(),
-        "Jeffery45!@".to_owned(),
-        "dbhuge".to_owned(),
-    ){
-        Ok(pg) => pg,
-        Err(err) => {
-            println!("Error message in main(): {:?}", err);
-            return Err("Failed to connect postgresql database!");
-        }
-    };
+    let mut wd = PostgreSQL::default();
+    // let mut wd = PostgreSQL::new("192.168.1.213".to_owned(),
+    // "sinnud".to_owned(),
+    // "Jeffery45!@".to_owned(),
+    // "dbhuge".to_owned(),
+    // )?;
     
-    let mut qry: String="select table_name from information_schema.tables ".to_owned();
-    let qry2="where table_catalog='dbhuge' ";
-    qry.push_str(qry2);
-    let qry2="and table_schema='wdinfo'";
-    qry.push_str(qry2);
-    println!("Query is \n{}", &qry);
-    let qry=&qry[0..];
-    for row in match &wd.conn.query(qry, &[]){
-        Ok(res) => res,
-        Err(err) => {
-            println!("Error message in main(): {:?}", err);
-            return Err("Failed to run above query!");
-        }
-    } {
-        let tblname: String=row.get(0);
-        println!("Found table {:?}", tblname);
-    }
+    // let qry="select table_name from information_schema.tables where table_catalog='dbhuge' and table_schema='wdinfo'";
+    // let dbname="dbhuge";
+    // let skmname="wdinfo";
+    // let qry="select table_name from information_schema.tables where table_catalog=$1 and table_schema=$2";
+    // println!("Query is: {}", qry);
+    // for row in wd.query(qry, &[&dbname, &skmname])? {
+    //     let tblname: String=row.get(0);
+    //     println!("Found table {:?}", tblname);
+    // }
     
-    let qry="truncate table wdinfo._file_st";
-    println!("Query is \n{}", qry);
-    match &wd.conn.execute(qry, &[]){
-        Ok(_) => {}
-        Err(err) => {
-            println!("Error message in main(): {:?}", err);
-            return Err("Failed to execute above query!");
-        }
-    };
+    let skmname="wdinfo";
+    let tblname="_file_st";
+    let tblstr="filename texterr, folder text, type text, fullpath text, filesize bigint, filecreate_dt timestamp";
+    wd.create_truncate_table(skmname, tblname, tblstr)?;
 
     let fs=FileStatus::get_file_status_under_folder("src","|").unwrap();
     println!("Result:\n{}", fs);
     let qry="COPY wdinfo._file_st FROM STDIN DELIMITER '|'";
-    match wd.import_data(qry, fs){
-        Ok(_) => {},
-        Err(err) => {
-            println!("Error message in main(): {:?}", err);
-            println!("Query: {}", qry);
-            return Err("Failed to execute the above query with import_data()!");
-        }
-    };
+    wd.import_data(qry, fs)?;
     Ok(())
 }

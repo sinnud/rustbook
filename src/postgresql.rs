@@ -74,7 +74,7 @@ impl PostgreSQL {
                 return Err("Failed to run execute!");
             }
         };
-        println!("DEBUG number of rows updated: {}", row_updated);
+        info!("number of rows updated: {}", row_updated);
         Ok(())
     }
     #[allow(dead_code)]
@@ -89,7 +89,7 @@ impl PostgreSQL {
                 return Err("Failed to run query!");
             }
         };
-        // println!("DEBUG length of result: {}", vr.len());
+        // info!("length of result: {}", vr.len());
         Ok(vr)
     }
     #[allow(dead_code)]
@@ -106,7 +106,7 @@ impl PostgreSQL {
             }
         };
         let res: i32 = row.get(0);
-        // println!("DEBUG {}", res);
+        // info!("{}", res);
         Ok(res>0)
     }
     #[allow(dead_code)]
@@ -115,7 +115,7 @@ impl PostgreSQL {
         tbl: &str,
     ) -> Result<(), &'static str> {
         let qry=format!("SET SEARCH_PATH='{}'; DROP TABLE {}", skm, tbl);
-        println!("DEBUG in PostgreSQL::drop_table() query is\n{}", qry);
+        info!("in PostgreSQL::drop_table() query is\n{}", qry);
         let qry=&qry[..];
         match self.conn.batch_execute(qry){
             Ok(_) => Ok(()),
@@ -131,7 +131,7 @@ impl PostgreSQL {
         tbl: &str,
     ) -> Result<(), &'static str> {
         let qry=format!("SET SEARCH_PATH='{}'; TRUNCATE TABLE {}", skm, tbl);
-        println!("DEBUG in PostgreSQL::truncate_table() query is\n{}", qry);
+        info!("in PostgreSQL::truncate_table() query is\n{}", qry);
         let qry=&qry[..];
         match self.conn.batch_execute(qry){
             Ok(_) => Ok(()),
@@ -161,7 +161,7 @@ impl PostgreSQL {
         //         return Err("Failed to run execute!");
         //     }
         // };
-        // println!("DEBUG number of rows updated: {}", row_updated);
+        // info!("number of rows updated: {}", row_updated);
         // match transaction.commit(){
         //     Ok(_) => (),
         //     Err(err) => {
@@ -180,7 +180,7 @@ impl PostgreSQL {
         let mut qry=format!("SET SEARCH_PATH='{}'; CREATE TABLE {} (", skm, tbl);
         qry.push_str(tbl_str);
         qry.push_str(")");
-        println!("DEBUG in PostgreSQL::create_table() query is\n{}", qry);
+        info!("in PostgreSQL::create_table() query is\n{}", qry);
         let qry=&qry[..];
         match self.conn.batch_execute(qry){
             Ok(_) => Ok(()),

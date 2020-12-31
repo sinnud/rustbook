@@ -1,5 +1,5 @@
 [package]
-name = "postgresql"
+name = "wdinfo"
 version = "0.1.0"
 authors = ["Luke Du <sinnud@gmail.com>"]
 edition = "2018"
@@ -9,3 +9,12 @@ postgres = "0.19.0"          # connect to postgresql
 percent-encoding = "2.1.0"   # URL encoding
 chrono = "0.4.19"            # SystemTime format to string
 walkdir = "2.3.1"            # get all files under folder including sub-folder
+log = "*"
+#test-logger = "*"
+log4rs = "*"
+#log4rs-rolling-file = "*"
+# env_logger = "*"
+
+[[bin]]
+name = "wdinfo"
+path = "src/main.rs"

@@ -1,12 +1,29 @@
-mod lib_pg;
+// log to file
+#[macro_use]
+extern crate log;
+extern crate log4rs;
+
 #[allow(unused_imports)]
-use crate::lib_pg::PostgreSQL;
-mod lib_fs;
+use crate::postgresql::PostgreSQL;
 #[allow(unused_imports)]
-use crate::lib_fs::FileStatus;
+use crate::file_status::FileStatus;
+#[allow(unused_imports)]
+use crate::wdinfo::WDInfo;
+
+mod postgresql;
+mod file_status;
+mod wdinfo;
+
+#[allow(unused_imports)]
+use crate::file_status::rename_log_with_timestamp;
+
+
 fn main()-> Result<(), &'static str>{
-    /*
-    let mut wd = PostgreSQL::default();
+    log4rs::init_file("config/log4rs.yaml", Default::default()).unwrap();
+    // see config/log4ts.yaml
+    rename_log_with_timestamp("log/requests.log")?;
+    
+    // let mut wd = PostgreSQL::default();
     // let mut wd = PostgreSQL::new("192.168.1.213".to_owned(),
     // "sinnud".to_owned(),
     // "Jeffery45!@".to_owned(),
@@ -22,7 +39,7 @@ fn main()-> Result<(), &'static str>{
     //     let tblname: String=row.get(0);
     //     println!("Found table {:?}", tblname);
     // }
-    
+/*    
     let skmname="wdinfo";
     let tblname="_file_st";
     let tblstr="filename text, folder text, type text, fullpath text, filesize bigint, filecreate_dt timestamp";
@@ -33,7 +50,10 @@ fn main()-> Result<(), &'static str>{
     let qry="COPY wdinfo._file_st FROM STDIN DELIMITER '|'";
     wd.import_data(qry, fs)?;
 */
-    FileStatus::copy_file("ori.txt", "dest.txt")?;
-    FileStatus::delete_file("dest.txt")?;
+    let mut wd=WDInfo::default();
+    let thisstr=wd.last_insert_dt("wdinfo", "movie241")?;
+    info!("Result is {}", thisstr);
+    wd.fs_import_pg("/mnt/public/newmovies", "//192.168.1.241/")?;
+    wd.wdinfo_update("wdinfo", "movie241")?;
     Ok(())
 }

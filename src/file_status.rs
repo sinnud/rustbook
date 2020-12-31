@@ -5,6 +5,35 @@ extern crate walkdir;
 use walkdir::WalkDir;
 use std::path::PathBuf;
 
+// date and time
+extern crate chrono;
+use chrono::offset::Utc;
+use chrono::DateTime;
+use std::time::SystemTime;
+
+#[allow(dead_code)]
+pub fn rename_log_with_timestamp(pathstr: &str) -> Result<(), &'static str> {
+    let path=PathBuf::from(&pathstr);
+    let md = std::fs::metadata(&path).unwrap();
+    if !md.is_file(){
+        println!("in rename_log_with_timestamp, log file={}", &pathstr);
+        return Err("log file is not one file!")
+    } 
+    if md.len()>0{
+        println!("{} is empty!", &pathstr);
+        return Ok(())
+    }
+    let system_time = SystemTime::now();
+    let datetime: DateTime<Utc> = system_time.into();
+    let post_ts=datetime.format("%Y%m%d_%H%M%S");
+    let ext=if path.extension().is_none(){""}else{path.extension().unwrap().to_str().unwrap()};
+    let base=path.file_stem().unwrap().to_str().unwrap();
+    let dir=path.parent().unwrap().to_str().unwrap();
+    let dest_file=if ext.len()==0{format!("{}/{}_{}", dir, base, post_ts)}else{format!("{}/{}_{}.{}", dir, base, post_ts, ext)};
+    FileStatus::rename_file(pathstr, &dest_file)?;
+    Ok(())
+}
+
 #[allow(dead_code)]
 #[derive(Debug)]
 pub struct FileStatus {
@@ -20,9 +49,9 @@ pub struct FileStatus {
 impl FileStatus {
     #[allow(dead_code)]
     pub fn get_status(path: &PathBuf) -> Result<FileStatus, &'static str> {
-        // println!("DEBUG in get_status: extension() is {:?}", path.extension());
+        // info!("in get_status: extension() is {:?}", path.extension());
         let ext=if path.extension().is_none(){""}else{path.extension().unwrap().to_str().unwrap()};
-        // println!("DEBUG in get_status: ext is '{}' with length {}", ext, ext.len());
+        // info!("in get_status: ext is '{}' with length {}", ext, ext.len());
         let base=path.file_stem().unwrap().to_str().unwrap();
         let dir=path.parent().unwrap().to_str().unwrap();
         let md = std::fs::metadata(path).unwrap();
@@ -50,25 +79,28 @@ impl FileStatus {
     }
     #[allow(dead_code)]
     pub fn get_file_status_under_folder(path: &str, 
-        delimiter: &str     // for data base import
+        delimiter: &str,     // for data base import
+        mntpoint: &str,      // instead of /mnt/public, use //192.168.1.241/public
+                             //            /mnt/movie,  use //192.168.1.243/movie
     ) -> Result<String, &'static str> {
         let pathori=PathBuf::from(path);
         let pathcrt=if pathori.is_relative(){
             std::env::current_dir().unwrap().join(path)
         } else {pathori};
-        // println!("DEBUG path is: {}", pathcrt.to_str().unwrap());
+        // info!("path is: {}", pathcrt.to_str().unwrap());
         let dir=WalkDir::new(pathcrt.to_str().unwrap());
         let mut res="".to_string();
         for e in dir.into_iter().filter_map(|e| e.ok()){
             if e.metadata().unwrap().is_file(){
-                // println!("DEBUG e is: {:?}", e.path());
+                // info!("e is: {:?}", e.path());
                 let buf = PathBuf::from(e.path());
                 let fs=FileStatus::get_status(&buf).unwrap();
-                // println!("DEBUG fs is: {:?}", fs);
+                let mntpointpath=&fs.path.replace("/mnt/", mntpoint);
+                // info!("fs is: {:?}", fs);
                 res.push_str(&fs.name);res.push_str(delimiter);
-                res.push_str(&fs.path);res.push_str(delimiter);
+                res.push_str(mntpointpath);res.push_str(delimiter);
                 res.push_str(&fs.filetype);res.push_str(delimiter);
-                res.push_str(&fs.path);res.push_str("/");
+                res.push_str(mntpointpath);res.push_str("/");
                 res.push_str(&fs.name);res.push_str(delimiter);
                 res.push_str(&fs.size.to_string());res.push_str(delimiter);
                 res.push_str(&fs.dt_created);res.push_str("\n");

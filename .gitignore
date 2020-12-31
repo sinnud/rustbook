@@ -4,3 +4,6 @@
 /libs/*/.gitignore
 /libs/*/.git
 /libs/*/target
+
+# log files
+/log

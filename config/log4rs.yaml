@@ -16,7 +16,8 @@ root:
   level: info
   appenders:
     - stdout
-    - requests
+    # also save to file
+    # - requests
 loggers:
   # Raise the maximum log level for events sent to the "app::backend::db" logger to "info"
   app::backend::db:

@@ -51,9 +51,15 @@ fn main()-> Result<(), &'static str>{
     wd.import_data(qry, fs)?;
 */
     let mut wd=WDInfo::default();
-    let thisstr=wd.last_insert_dt("wdinfo", "movie241")?;
-    info!("Result is {}", thisstr);
+    // let thisstr=wd.last_insert_dt("wdinfo", "movie241")?;
+    // info!("Result is {}", thisstr);
+
+    info!("Start collecting file information from WD net drive, importing to postgresql temporary table...");
     wd.fs_import_pg("/mnt/public/newmovies", "//192.168.1.241/")?;
-    wd.wdinfo_update("wdinfo", "movie241")?;
+    info!("Finished fs_import_pg.");
+
+    info!("Start refresh table in postgresql...");
+    wd.wdinfo_refresh("wdinfo", "movie241")?;
+    info!("Finished refresh table.");
     Ok(())
 }

@@ -16,11 +16,11 @@ pub fn rename_log_with_timestamp(pathstr: &str) -> Result<(), &'static str> {
     let path=PathBuf::from(&pathstr);
     let md = std::fs::metadata(&path).unwrap();
     if !md.is_file(){
-        println!("in rename_log_with_timestamp, log file={}", &pathstr);
+        error!("in rename_log_with_timestamp, log file={}", &pathstr);
         return Err("log file is not one file!")
     } 
-    if md.len()>0{
-        println!("{} is empty!", &pathstr);
+    if md.len()==0{
+        info!("{} is empty!", &pathstr);
         return Ok(())
     }
     let system_time = SystemTime::now();

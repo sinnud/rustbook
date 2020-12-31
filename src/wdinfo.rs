@@ -149,4 +149,30 @@ impl WDInfo {
         };
         Ok(())
     }
+    #[allow(dead_code)]
+    pub fn wdinfo_refresh(&mut self,
+        skm: &str,
+        tbl: &str,
+    ) -> Result<(), &'static str> {
+        match self.pg.truncate_table(&skm, &tbl){
+            Ok(_) => (),
+            Err(err) => {
+                println!("Error message in WDInfo::wdinfo_refresh(): truncate_table {:?}", err);
+                return Err("Failed to run WDInfo::wdinfo_refresh!");
+            }
+        };
+        let qry=format!("insert into {}.{} select *, now()::timestamp from {}.{}",
+                        skm, tbl, self.tmp_skm, self.tmp_tbl,
+                       );
+        info!("in WDInfo::wdinfo_refresh query: \n{}", qry);
+        let qry=&qry[..];
+        match self.pg.execute(qry, &[]){
+            Ok(_) => (),
+            Err(err) => {
+                println!("Error message in WDInfo::wdinfo_refresh(): execute {:?}", err);
+                return Err("Failed to run WDInfo::wdinfo_refresh!");
+            }
+        };
+        Ok(())
+    }
 }

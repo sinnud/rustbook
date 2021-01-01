@@ -37,17 +37,10 @@ pub fn rename_log_with_timestamp(pathstr: &str) -> Result<(), &'static str> {
             return Err("Failed in rename_log_with_timestamp!");
         }
     };
-    let f = match std::fs::File::open(pathstr){
-        Ok(res) => res,
-        Err(err) => {
-            error!("In rename_log_with_timestamp, open({}):{}", pathstr, err);
-            return Err("Failed in rename_log_with_timestamp!");
-        }
-    };
-    match f.set_len(0){
+    match FileStatus::delete_file(pathstr){
         Ok(_) => (),
         Err(err) => {
-            error!("In rename_log_with_timestamp, set_len(0):{}", err);
+            error!("In rename_log_with_timestamp, delete_file({}):{}", pathstr, err);
             return Err("Failed in rename_log_with_timestamp!");
         }
     };

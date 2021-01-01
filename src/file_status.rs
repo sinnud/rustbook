@@ -30,7 +30,9 @@ pub fn rename_log_with_timestamp(pathstr: &str) -> Result<(), &'static str> {
     let base=path.file_stem().unwrap().to_str().unwrap();
     let dir=path.parent().unwrap().to_str().unwrap();
     let dest_file=if ext.len()==0{format!("{}/{}_{}", dir, base, post_ts)}else{format!("{}/{}_{}.{}", dir, base, post_ts, ext)};
-    FileStatus::rename_file(pathstr, &dest_file)?;
+    FileStatus::copy_file(pathstr, &dest_file)?;
+    let mut f = std::fs::File::open(&pathstr)?;
+    f.set_len(0)?;
     Ok(())
 }
 
@@ -133,34 +135,6 @@ impl FileStatus {
         Ok(())
     }
     #[allow(dead_code)]
-    pub fn rename_file(ori_path: &str, 
-        dest_path: &str,
-    ) -> Result<(), &'static str> {
-        let md = match std::fs::metadata(ori_path){
-            Ok(res) => res,
-            Err(err) => {
-                error!("In FileStatus::rename_file(), std::fs::metadata errored:\n{}: {}", ori_path, err);
-                return Err("Failed to rename_file!");
-            },
-        };
-        if !md.is_file(){
-            error!("In FileStatus::rename_file({}), it is not a file!", ori_path);
-            return Err("Failed to rename_file!");
-        }
-        if std::path::Path::new(dest_path).exists(){
-            error!("In FileStatus::rename_file(), destination file {} already exists!", dest_path);
-            return Err("Failed to rename_file!");
-        }
-        match std::fs::rename(ori_path, dest_path){
-            Ok(_) => (),
-            Err(err) => {
-                error!("In FileStatus::rename_file({}, {}), std::fs::rename errored:\n{}", ori_path, dest_path, err);
-                return Err("Failed to rename_file!");
-            },
-        };
-        Ok(())
-    }
-    #[allow(dead_code)]
     pub fn copy_file(ori_path: &str, 
         dest_path: &str,
     ) -> Result<(), &'static str> {
@@ -178,6 +152,16 @@ impl FileStatus {
         if std::path::Path::new(dest_path).exists(){
             error!("In FileStatus::copy_file(), destination file {} already exists!", dest_path);
             return Err("Failed to copy_file!");
+        }
+        let dir=std::path::Path::new(dest_path).parent().unwrap();
+        if !dir.exists() {
+            match std::fs::create_dir_all(dir.to_str().unwrap()){
+                Ok(_) => (),
+                Err(err) => {
+                    error!("In FileStatus::copy_file({}, {}), std::fs::create_dir_all errored:\n{}", ori_path, dest_path, err);
+                    return Err("Failed to copy_file!");
+                }
+            };
         }
         match std::fs::copy(ori_path, dest_path){
             Ok(_) => (),
@@ -203,12 +187,6 @@ mod tests {
             } else {pathori};
         let fs=FileStatus::get_status(&path).unwrap();
         assert_eq!(fs.name,"README.md".to_string());
-    }
-    #[test]
-    fn test_rename_file() {
-        let ori_filename="ori.txt";
-        let dest_filename="dest.txt";
-        FileStatus::rename_file(ori_filename, dest_filename).unwrap();
     }
 }
 

@@ -285,18 +285,20 @@ impl WDInfo {
         let path=std::path::PathBuf::from(fullpath);
         let base=path.file_name().unwrap().to_str().unwrap();
         let dir=path.parent().unwrap().to_str().unwrap();
-        let dir241=dir.replace(&self.pre243, &self.pre241);
-        let full241=format!("{}/{}", &dir241, &base);
+        let dir241=dir.replace(&self.pre243, &self.pre241).replace("'", "''");
+        let full241=format!("{}/{}", &dir241, &base).replace("'", "''");
+        let fullstr=fullpath.to_owned().replace("'", "''");
         // info!("in wdinfo_sync_one, folder: {} and fullpath: {}", &dir241, &full241);
         // filename | folder | type | fullpath | filesize | filecreate_dt | inserted_dt
         let qry=format!("insert into {}.{} select filename, '{}', type, '{}', filesize, filecreate_dt, now()::timestamp from {}.{} where {}='{}'",
-            skm, oldtbl, &dir241, &full241, skm, newtbl, self.keyvar, fullpath);
+            skm, oldtbl, &dir241, &full241, skm, newtbl, self.keyvar, &fullstr);
         // info!("In WDInfo::wdinfo_sync_one query: \n{}", qry);
         let qry=&qry[..];
         match self.pg.execute(qry, &[]){
             Ok(_) => (),
             Err(err) => {
                 error!("In wdinfo_sync_one, execute errored:\n{}", err);
+                error!("Query is: {}.", qry);
                 return Err("Failed to wdinfo_sync_one.");
                 }
         }

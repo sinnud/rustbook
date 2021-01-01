@@ -15,9 +15,9 @@ use crate::file_status::rename_log_with_timestamp;
 
 
 fn main()-> Result<(), &'static str>{
-    log4rs::init_file("config/log4rs.yaml", Default::default()).unwrap();
     // see config/log4ts.yaml
     rename_log_with_timestamp("log/wdinfo.log")?;
+    log4rs::init_file("config/log4rs.yaml", Default::default()).unwrap();
     
     let mut wd=WDInfo::default();
 

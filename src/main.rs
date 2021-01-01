@@ -4,10 +4,6 @@ extern crate log;
 extern crate log4rs;
 
 #[allow(unused_imports)]
-use crate::postgresql::PostgreSQL;
-#[allow(unused_imports)]
-use crate::file_status::FileStatus;
-#[allow(unused_imports)]
 use crate::wdinfo::WDInfo;
 
 mod postgresql;
@@ -21,7 +17,7 @@ use crate::file_status::rename_log_with_timestamp;
 fn main()-> Result<(), &'static str>{
     log4rs::init_file("config/log4rs.yaml", Default::default()).unwrap();
     // see config/log4ts.yaml
-    rename_log_with_timestamp("log/requests.log")?;
+    rename_log_with_timestamp("log/wdinfo.log")?;
     
     let mut wd=WDInfo::default();
 

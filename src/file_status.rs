@@ -12,15 +12,48 @@ use chrono::DateTime;
 use std::time::SystemTime;
 
 #[allow(dead_code)]
+pub fn log_config_path() -> Result<String, &'static str> {
+    // get root path of development (debug or release) or production
+    // the sub folder config and log is under root.
+    // For debug development, executable file is under root/target/debug
+    // For release development, executable file is under root/target/release
+    // For production, executable file is under root directly
+    let pathexe = match std::env::current_exe(){
+        Ok(res) => res,
+        Err(err) => {
+            error!("In log_config_path, current_exe(): {}", err);
+            return Err("log_config_path, failed!");
+        }
+    };
+    let root=pathexe.parent().unwrap(); // drop execute file
+    let parent=root.file_name().unwrap().to_str().unwrap();  // get release or debug, or production parent folder
+        
+    let res = if parent == "debug" || parent == "release" {
+        root.parent().unwrap() // release
+            .parent().unwrap() // target
+            .to_str().unwrap()
+    } else {
+        root.to_str().unwrap()
+    };
+    Ok(res.to_owned())
+}
+
+#[allow(dead_code)]
 pub fn rename_log_with_timestamp(pathstr: &str) -> Result<(), &'static str> {
     let path=PathBuf::from(&pathstr);
-    let md = std::fs::metadata(&path).unwrap();
+    let md = match std::fs::metadata(&path){
+        Ok(res) => res,
+        Err(err) => {
+            error!("in rename_log_with_timestamp, log file {} does not exist: {}", pathstr, err);
+            return Ok(())
+        }
+    };
     if !md.is_file(){
-        error!("in rename_log_with_timestamp, log file={}", &pathstr);
+        error!("in rename_log_with_timestamp, log {} is NOT a file!", pathstr);
         return Err("log file is not one file!")
     } 
     if md.len()==0{
-        info!("{} is empty!", &pathstr);
+        info!("{} is empty!", pathstr);
         return Ok(())
     }
     let system_time = SystemTime::now();

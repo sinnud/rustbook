@@ -1,6 +1,6 @@
 [package]
 name = "wdinfo"
-version = "0.1.0"
+version = "0.1.1"
 authors = ["Luke Du <sinnud@gmail.com>"]
 edition = "2018"
 
@@ -14,6 +14,14 @@ log = "*"
 log4rs = "*"
 #log4rs-rolling-file = "*"
 # env_logger = "*"
+
+#--------------------------------------------#
+# compile command: cargo build --lib --bins  #
+# or: cargo build --lib --bins --release     #
+#--------------------------------------------#
+[lib]
+name = "lib_wd"
+path = "src/lib.rs"
 
 [[bin]]
 name = "wdinfo"

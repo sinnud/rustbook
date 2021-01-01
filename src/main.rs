@@ -1,25 +1,14 @@
-// log to file
-#[macro_use]
-extern crate log;
-extern crate log4rs;
-
-#[allow(unused_imports)]
-use crate::wdinfo::WDInfo;
-
-mod postgresql;
-mod file_status;
-mod wdinfo;
-
-#[allow(unused_imports)]
-use crate::file_status::rename_log_with_timestamp;
-
-
 fn main()-> Result<(), &'static str>{
-    // see config/log4ts.yaml
-    rename_log_with_timestamp("log/wdinfo.log")?;
-    log4rs::init_file("config/log4rs.yaml", Default::default()).unwrap();
+    let root=lib_wd::file_status::log_config_path()?;
     
-    let mut wd=WDInfo::default();
+    // log file is log/wdinfo.log. see config/log4ts.yaml
+    let logfile=format!("{}/log/wdinfo.log", root);
+    let log4rs_yaml=format!("{}/config/log4rs.yaml", root);
+    
+    lib_wd::file_status::rename_log_with_timestamp(&logfile)?;
+    log4rs::init_file(&log4rs_yaml, Default::default()).unwrap();
+    
+    let mut wd=lib_wd::wdinfo::WDInfo::default();
 
     wd.wdrefresh("/mnt/music", "wdinfo", "music243")?;
     wd.wdrefresh("/mnt/public/music", "wdinfo", "music241")?;
@@ -36,6 +25,6 @@ fn main()-> Result<(), &'static str>{
     wd.wdrefresh("/mnt/movie", "wdinfo", "movie243")?;
 
     wd.wdrefresh("/mnt/public/newmovies", "wdinfo", "movie241")?;
-
+    
     Ok(())
 }

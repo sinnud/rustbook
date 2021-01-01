@@ -30,9 +30,27 @@ pub fn rename_log_with_timestamp(pathstr: &str) -> Result<(), &'static str> {
     let base=path.file_stem().unwrap().to_str().unwrap();
     let dir=path.parent().unwrap().to_str().unwrap();
     let dest_file=if ext.len()==0{format!("{}/{}_{}", dir, base, post_ts)}else{format!("{}/{}_{}.{}", dir, base, post_ts, ext)};
-    FileStatus::copy_file(pathstr, &dest_file)?;
-    let mut f = std::fs::File::open(&pathstr)?;
-    f.set_len(0)?;
+    match FileStatus::copy_file(pathstr, &dest_file){
+        Ok(_) => (),
+        Err(err) => {
+            error!("In rename_log_with_timestamp, copy_file({}, {}):{}", pathstr, &dest_file, err);
+            return Err("Failed in rename_log_with_timestamp!");
+        }
+    };
+    let f = match std::fs::File::open(pathstr){
+        Ok(res) => res,
+        Err(err) => {
+            error!("In rename_log_with_timestamp, open({}):{}", pathstr, err);
+            return Err("Failed in rename_log_with_timestamp!");
+        }
+    };
+    match f.set_len(0){
+        Ok(_) => (),
+        Err(err) => {
+            error!("In rename_log_with_timestamp, set_len(0):{}", err);
+            return Err("Failed in rename_log_with_timestamp!");
+        }
+    };
     Ok(())
 }
 

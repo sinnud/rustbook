@@ -114,7 +114,7 @@ impl FileStatus {
         let md = match std::fs::metadata(path){
             Ok(res) => res,
             Err(err) => {
-                println!("In FileStatus::delete_file(), std::fs::metadata errored:\n{}: {}", path, err);
+                error!("In FileStatus::delete_file(), std::fs::metadata errored:\n{}: {}", path, err);
                 return Err("Failed to delete_file!");
             },
         };
@@ -122,12 +122,12 @@ impl FileStatus {
             match std::fs::remove_file(path){
                 Ok(_) => (),
                 Err(err) => {
-                    println!("In FileStatus::delete_file(), std::fs::remove_file errored:\n{}", err);
+                    error!("In FileStatus::delete_file({}), std::fs::remove_file errored:\n{}", path, err);
                     return Err("Failed to delete_file!");
                 },
             }
         } else {
-            println!("In FileStatus::delete_file({}), it is not a file!", path);
+            error!("In FileStatus::delete_file({}), it is not a file!", path);
             return Err("Failed to delete_file!");
         }
         Ok(())
@@ -139,22 +139,22 @@ impl FileStatus {
         let md = match std::fs::metadata(ori_path){
             Ok(res) => res,
             Err(err) => {
-                println!("In FileStatus::rename_file(), std::fs::metadata errored:\n{}: {}", ori_path, err);
+                error!("In FileStatus::rename_file(), std::fs::metadata errored:\n{}: {}", ori_path, err);
                 return Err("Failed to rename_file!");
             },
         };
         if !md.is_file(){
-            println!("In FileStatus::rename_file({}), it is not a file!", ori_path);
+            error!("In FileStatus::rename_file({}), it is not a file!", ori_path);
             return Err("Failed to rename_file!");
         }
         if std::path::Path::new(dest_path).exists(){
-            println!("In FileStatus::rename_file(), destination file {} already exists!", dest_path);
+            error!("In FileStatus::rename_file(), destination file {} already exists!", dest_path);
             return Err("Failed to rename_file!");
         }
         match std::fs::rename(ori_path, dest_path){
             Ok(_) => (),
             Err(err) => {
-                println!("In FileStatus::rename_file(), std::fs::rename errored:\n{}", err);
+                error!("In FileStatus::rename_file({}, {}), std::fs::rename errored:\n{}", ori_path, dest_path, err);
                 return Err("Failed to rename_file!");
             },
         };
@@ -167,22 +167,22 @@ impl FileStatus {
         let md = match std::fs::metadata(ori_path){
             Ok(res) => res,
             Err(err) => {
-                println!("In FileStatus::copy_file(), std::fs::metadata errored:\n{}: {}", ori_path, err);
+                error!("In FileStatus::copy_file(), std::fs::metadata errored:\n{}: {}", ori_path, err);
                 return Err("Failed to copy_file!");
             },
         };
         if !md.is_file(){
-            println!("In FileStatus::copy_file({}), it is not a file!", ori_path);
+            error!("In FileStatus::copy_file({}), it is not a file!", ori_path);
             return Err("Failed to copy_file!");
         }
         if std::path::Path::new(dest_path).exists(){
-            println!("In FileStatus::copy_file(), destination file {} already exists!", dest_path);
+            error!("In FileStatus::copy_file(), destination file {} already exists!", dest_path);
             return Err("Failed to copy_file!");
         }
         match std::fs::copy(ori_path, dest_path){
             Ok(_) => (),
             Err(err) => {
-                println!("In FileStatus::copy_file(), std::fs::copy errored:\n{}", err);
+                error!("In FileStatus::copy_file({}, {}), std::fs::copy errored:\n{}", ori_path, dest_path, err);
                 return Err("Failed to copy_file!");
             },
         };

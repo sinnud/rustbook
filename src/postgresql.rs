@@ -32,7 +32,7 @@ impl Default for PostgreSQL {
             conn: match Client::connect(&constr, NoTls){
                 Ok(pg) => pg,
                 Err(err) =>{
-                    println!("Error message in default() for PostgreSQL: {:?}", err);
+                    error!("in default() for PostgreSQL: {:?}", err);
                     println!("Failed to connect database using default() function!");
                     std::process::exit(1);
                 }
@@ -52,7 +52,7 @@ impl PostgreSQL {
             conn: match Client::connect(&constr, NoTls){
                 Ok(pg) => pg,
                 Err(err) => {
-                    println!("Error message in PostgreSQL::new(): {:?}", err);
+                    error!("in PostgreSQL::new(): {:?}", err);
                     println!("Failed to connect database using new({}:{}@{}/{}) function!",
                         username, &password, host, database
                         );
@@ -70,7 +70,7 @@ impl PostgreSQL {
         let row_updated = match self.conn.execute(qry, params){
             Ok(res) => res,
             Err(err) => {
-                println!("Error message in PostgreSQL::execute(): {:?}", err);
+                error!("in PostgreSQL::execute(): {:?}", err);
                 return Err("Failed to run execute!");
             }
         };
@@ -85,7 +85,7 @@ impl PostgreSQL {
         let vr = match self.conn.query(qry, params){
             Ok(res) => res,
             Err(err) => {
-                println!("Error message in PostgreSQL::query(): {:?}", err);
+                error!("in PostgreSQL::query(): {:?}", err);
                 return Err("Failed to run query!");
             }
         };
@@ -101,7 +101,7 @@ impl PostgreSQL {
         let row = match self.conn.query_one(qry, &[&skm, &tbl]){
             Ok(res) => res,
             Err(err) => {
-                println!("Error message in PostgreSQL::table_exist(): {:?}", err);
+                error!("in PostgreSQL::table_exist(): {:?}", err);
                 return Err("Failed to run PostgreSQL::table_exist!");
             }
         };
@@ -120,7 +120,7 @@ impl PostgreSQL {
         match self.conn.batch_execute(qry){
             Ok(_) => Ok(()),
             Err(err) => {
-                println!("Error message in PostgreSQL::drop_table: {:?}", err);
+                error!("in PostgreSQL::drop_table: {:?}", err);
                 return Err("Failed to run PostgreSQL::drop_table!");
             }
         }
@@ -131,33 +131,33 @@ impl PostgreSQL {
         tbl: &str,
     ) -> Result<(), &'static str> {
         let qry=format!("SET SEARCH_PATH='{}'; TRUNCATE TABLE {}", skm, tbl);
-        info!("in PostgreSQL::truncate_table() query is\n{}", qry);
+        debug!("in PostgreSQL::truncate_table() query is\n{}", qry);
         let qry=&qry[..];
         match self.conn.batch_execute(qry){
             Ok(_) => Ok(()),
             Err(err) => {
-                println!("Error message in PostgreSQL::truncate_table: {:?}", err);
+                error!("in PostgreSQL::truncate_table: {:?}", err);
                 return Err("Failed to run PostgreSQL::truncate_table!");
             }
         }
         // let mut transaction = match self.conn.transaction(){
         //     Ok(res) => res,
         //     Err(err) => {
-        //         println!("Error message in PostgreSQL::truncate_table.transaction(): {:?}", err);
+        //         error!("in PostgreSQL::truncate_table.transaction(): {:?}", err);
         //         return Err("Failed to run truncate_table!");
         //     }
         // };
         // match transaction.execute("SET SEARCH_PATH=$1", &[&skm]){
         //     Ok(_) => (),
         //     Err(err) => {
-        //         println!("Error message in PostgreSQL::truncate_table.transaction.execute() 1: {:?}", err);
+        //         error!("in PostgreSQL::truncate_table.transaction.execute() 1: {:?}", err);
         //         return Err("Failed to run truncate_table!");
         //     }
         // };
         // let row_updated = match transaction.execute("TRUNCATE TABLE $1", &[&tbl]){
         //     Ok(res) => res,
         //     Err(err) => {
-        //         println!("Error message in PostgreSQL::truncate_table.transaction.execute() 2: {:?}", err);
+        //         error!("in PostgreSQL::truncate_table.transaction.execute() 2: {:?}", err);
         //         return Err("Failed to run execute!");
         //     }
         // };
@@ -165,7 +165,7 @@ impl PostgreSQL {
         // match transaction.commit(){
         //     Ok(_) => (),
         //     Err(err) => {
-        //         println!("Error message in PostgreSQL::truncate_table.transaction.commit(): {:?}", err);
+        //         error!("in PostgreSQL::truncate_table.transaction.commit(): {:?}", err);
         //         return Err("Failed to run truncate_table!");
         //     }
         // };
@@ -185,7 +185,7 @@ impl PostgreSQL {
         match self.conn.batch_execute(qry){
             Ok(_) => Ok(()),
             Err(err) => {
-                println!("Error message in PostgreSQL::create_table: {:?}", err);
+                error!("in PostgreSQL::create_table: {:?}", err);
                 return Err("Failed to run PostgreSQL::create_table!");
             }
         }
@@ -199,14 +199,14 @@ impl PostgreSQL {
         if match self.table_exist(skm, tbl){
             Ok(res) => res,
             Err(err) => {
-                println!("Error message in PostgreSQL::create_truncate_table: {:?}", err);
+                error!("in PostgreSQL::create_truncate_table: {:?}", err);
                 return Err("Failed to run create_truncate_table!");
             }
         }{
             match self.truncate_table(skm, tbl){
                 Ok(_) => (),
                 Err(err) => {
-                    println!("Error message in PostgreSQL::create_truncate_table: {:?}", err);
+                    error!("in PostgreSQL::create_truncate_table: {:?}", err);
                     return Err("Failed to run create_truncate_table!");
                 }
             };
@@ -214,7 +214,7 @@ impl PostgreSQL {
             match self.create_table(skm, tbl, tbl_str){
                 Ok(_) => (),
                 Err(err) => {
-                    println!("Error message in PostgreSQL::create_truncate_table: {:?}", err);
+                    error!("in PostgreSQL::create_truncate_table: {:?}", err);
                     return Err("Failed to run PostgreSQL::create_truncate_table!");
                 }
             };
@@ -229,21 +229,22 @@ impl PostgreSQL {
         let mut writer = match self.conn.copy_in(qry){
             Ok(w) => w,
             Err(err) => {
-                println!("Error message in PostgreSQL::import_data().copy_in: {:?}", err);
+                error!("in PostgreSQL::import_data().copy_in: {:?}", err);
                 return Err("Failed to create writer in import_data() function!");
             }
         };
         match writer.write_all(datastring.as_bytes()){
             Ok(_) => {},
             Err(err) => {
-                println!("Error message in PostgreSQL::import_data().write_all: {:?}", err);
+                error!("in PostgreSQL::import_data().write_all: {:?}", err);
                 return Err("Failed to write_all in import_data() function!");
             }
         };
         match writer.finish(){
             Ok(_) => {},
             Err(err) => {
-                println!("Error message in PostgreSQL::import_data().finish: {:?}", err);
+                error!("in PostgreSQL::import_data().finish: {:?}", err);
+                std::fs::write("_debug.txt", datastring).expect("Unable to write file");
                 return Err("Failed to close writer in import_data() function!");
             }
         };

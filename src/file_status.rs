@@ -7,7 +7,8 @@ use std::path::PathBuf;
 
 // date and time
 extern crate chrono;
-use chrono::offset::Utc;
+#[allow(unused_imports)]
+use chrono::offset::{Utc, Local};
 use chrono::DateTime;
 use std::time::SystemTime;
 
@@ -57,7 +58,7 @@ pub fn rename_log_with_timestamp(pathstr: &str) -> Result<(), &'static str> {
         return Ok(())
     }
     let system_time = SystemTime::now();
-    let datetime: DateTime<Utc> = system_time.into();
+    let datetime: DateTime<Local> = system_time.into();
     let post_ts=datetime.format("%Y%m%d_%H%M%S");
     let ext=if path.extension().is_none(){""}else{path.extension().unwrap().to_str().unwrap()};
     let base=path.file_stem().unwrap().to_str().unwrap();

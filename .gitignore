@@ -1,4 +1,6 @@
 /target
+# try doc
+!/target/doc
 
 # Let lib in the same repository
 /libs/*/.gitignore

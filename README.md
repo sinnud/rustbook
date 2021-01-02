@@ -9,8 +9,8 @@ Use postgresql data base to handle WD net drives.
 - Use rust library structure. See Cargo.toml
 - Accept command line arguments
 - Use log4rs with yaml setting
-  - release production with config/log4rs.yaml same folder with executable file
-  - in config/log4rs.yaml, set log file with absolute path such that it does not depend on where to run code.
+  - release production with `config/log4rs.yaml` same folder with executable file
+  - in `config/log4rs.yaml`, set log file with absolute path such that it does not depend on where to run code.
 - Use progres crate to connect to PostgreSQL data base
 - Get file status
 - auto create doc (try to see if we can publish doc in GIT)

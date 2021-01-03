@@ -1,11 +1,6 @@
-/target
-# try doc
-!/target/doc
-
-# Let lib in the same repository
-/libs/*/.gitignore
-/libs/*/.git
-/libs/*/target
+/target/debug
+/target/release
+/target/rls
 
 # log files
 /log

@@ -1,9 +1,20 @@
-
+/*! WD sync tool
+ * Use PostgreSQL and FileStatus
+ */
 #[allow(unused_imports)]
 use crate::postgresql::PostgreSQL;
 #[allow(unused_imports)]
 use crate::file_status::FileStatus;
-
+/** # WDInfo struct
+ * pg as PostgreSQL connection (public)
+ * temporary schema, default `wdinfo`
+ * temporary table for PostgreSQL::import_data, default `_file_st`
+ * table structure for temporary table (string)
+ * inserted timestamp (not used?)
+ * key variable for tables, default `fullpath`
+ * prefix string for 192.168.1.241, default `//192.168.1.241/public/`
+ * prefix string for 192.168.1.243, default `//192.168.1.243/`
+ */
 pub struct WDInfo{
     pub pg: PostgreSQL,
     tmp_skm: String,
@@ -15,6 +26,7 @@ pub struct WDInfo{
     pre243: String,
 }
 impl Default for WDInfo {
+    /** # default function for WDInfo */
     #[allow(dead_code)]
     fn default() -> Self {
         WDInfo{
@@ -30,6 +42,10 @@ impl Default for WDInfo {
     }
 }
 impl WDInfo {
+    /** # WD refresh: refresh PostgreSQL table based on files on WD net drive
+     * Like one interface of this library
+     * Calls self.fs_import_pg and self.wdinfo_refresh
+     */
     #[allow(dead_code)]
     pub fn wdrefresh(&mut self,
         path: &str,
@@ -52,6 +68,10 @@ impl WDInfo {
         };    
         Ok(())
     }
+    /** # WD sync: sync WD net drive and PostgreSQL table based on records in tables
+     * Like one interface of this library
+     * Calls self.wdinfo_compare and self.wdinfo_sync
+     */
     #[allow(dead_code)]
     pub fn wdsync(&mut self,
         skm: &str,
@@ -76,6 +96,10 @@ impl WDInfo {
         }
         Ok(())
     }
+    /** # WDInfo initialization, other than default
+     * use customer defined PostgreSQL connection arguments
+     * Other private elements are still using default
+     */
     #[allow(dead_code)]
     pub fn new(host: String,
         username: String,
@@ -87,6 +111,10 @@ impl WDInfo {
             ..Self::default()
         })
     }
+    /** # WDInfo initialization, other than default
+     * use customer defined PostgreSQL connection arguments
+     * And other private elements
+     */
     #[allow(dead_code)]
     pub fn new_special(host: String,
         username: String,
@@ -111,6 +139,9 @@ impl WDInfo {
             pre243: pre243,
         })
     }
+    /** # Check last time refresh of PostgreSQL table based on WD net drive
+     * (not used?)
+     */
     #[allow(dead_code)]
     pub fn last_insert_dt(&mut self,
         skm: &str,
@@ -129,6 +160,11 @@ impl WDInfo {
         let dt: String = row.get(0);
         Ok(dt)
     }
+    /** # Check WD net drive, import FileStatus into PostgreSQL temporary table
+     * The time consuming function: log start and finish status
+     * call FileStatus::get_file_status_under_folder with dilimeter "|", then
+     * call self.pg.import_data with query using dilimeter "|"
+     */
     #[allow(dead_code)]
     pub fn fs_import_pg(&mut self,
         path: &str,
@@ -166,6 +202,9 @@ impl WDInfo {
         info!("in WDInfo::fs_import_pg() finished!");
         Ok(())
     }
+    /** # update table using temporary table
+     * Not used?
+     */
     #[allow(dead_code)]
     pub fn wdinfo_update(&mut self,
         skm: &str,
@@ -205,6 +244,10 @@ impl WDInfo {
         };
         Ok(())
     }
+    /** # refresh table using temporary table
+     * truncate table
+     * insert into table using now()::timestamp
+     */
     #[allow(dead_code)]
     pub fn wdinfo_refresh(&mut self,
         skm: &str,
@@ -231,6 +274,10 @@ impl WDInfo {
         };
         Ok(())
     }
+    /** # compare tables for records represent different WD net drive for sync later
+     * call self.pg.query with return Vec<Row>
+     * convert return to Vec<String>
+     */
     // select a.* from music243 a left join music241 b on substr(a.fullpath,16)=substr(b.fullpath,23) 
     // where b.fullpath is null;
     #[allow(dead_code)]
@@ -265,6 +312,12 @@ impl WDInfo {
         debug!("New file list:\n{}", v.join("\n"));
         Ok(v)
     }
+    /** # sync WD net drive for one file
+     * call FileStatus::copy_file
+     * update table for this one record (append)
+     * Consider file name with single quotation (PostgreSQL use two single quotation represent one single quotation)
+     * path in tables start with //IP_address; convert to /mnt for copying file
+     */
     #[allow(dead_code)]
     pub fn wdinfo_sync_one(&mut self,
         skm: &str,
@@ -305,6 +358,10 @@ impl WDInfo {
         Ok(())
     }
     
+    /** # sync WD net drive for giving file list
+     * call self.wdinfo_sync_one
+     * time consuming process, with log of start and finished
+     */
     #[allow(dead_code)]
     pub fn wdinfo_sync(&mut self,
         skm: &str,

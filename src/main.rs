@@ -1,3 +1,14 @@
+/** # main function executable program start from.
+ 
+- Use return Result<(), &'static str> such that ? operator can be used if error is &str.
+- Assume log4rs.yaml file is stored under folder config
+under the same folder the executable program located `config/log4rs.yaml`.
+- Assume log folder is located the same folder the executable program located `log/wdinfo.log`.
+  - When the production (released) program is executed from other folder, log folder 
+    defined in log4rs.yaml need to manually created with full path
+  - log file will be archived using timestamp at the beginning of run.
+- Support command line arguments. See `envargs`.
+ */
 fn main()-> Result<(), &'static str>{
     let root=lib_wd::file_status::log_config_path()?;
     

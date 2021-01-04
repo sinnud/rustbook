@@ -3,6 +3,6 @@
 # /target/release
 # /target/rls
 # /target/doc
-
+/target/.rustc_info.json
 # log files
 /log

@@ -1,6 +1,8 @@
-/target/debug
-/target/release
-/target/rls
+/target
+# /target/debug
+# /target/release
+# /target/rls
+# /target/doc
 
 # log files
 /log

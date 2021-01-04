@@ -1,4 +1,8 @@
 /*! file status related functions and methods */
+// #[allow(unused_imports)]
+// #[macro_use]
+// extern crate log;
+// extern crate log4rs;
 
 // walk dir
 extern crate walkdir;

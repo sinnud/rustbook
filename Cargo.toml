@@ -14,15 +14,16 @@ log = "*"
 log4rs = "*"
 #log4rs-rolling-file = "*"
 # env_logger = "*"
+mysql = "*"
 
 #--------------------------------------------#
 # compile command: cargo build --lib --bins  #
 # or: cargo build --lib --bins --release     #
 #--------------------------------------------#
 [lib]
-name = "lib_wd"
-path = "src/lib.rs"
+name = "wdinfo"
+path = "src/wdinfo/mod.rs"
 
 [[bin]]
-name = "wdinfo"
-path = "src/main.rs"
+name = "wdsync"
+path = "src/bin/main.rs"

@@ -3,10 +3,10 @@
 use postgres::{Client, NoTls, Row};
 use postgres::types::ToSql;
 // import data into postgresql database
+#[allow(unused_imports)]
 use std::io::Write;
 // URL encoding for connecting to postgresql
 use percent_encoding::{utf8_percent_encode, AsciiSet, CONTROLS};
-// walk dir
 
 /** # URL encode
  * in case when your password have symbol out of URL set, like !@ (see src code)

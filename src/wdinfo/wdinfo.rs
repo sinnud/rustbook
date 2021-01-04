@@ -1,6 +1,10 @@
 /*! WD sync tool
  * Use PostgreSQL and FileStatus
  */
+// #[allow(unused_imports)]
+// #[macro_use]
+// extern crate log;
+// extern crate log4rs;
 #[allow(unused_imports)]
 use crate::postgresql::PostgreSQL;
 #[allow(unused_imports)]

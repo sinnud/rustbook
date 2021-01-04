@@ -1,4 +1,4 @@
-// file status related libraries
+/*! file status related functions and methods */
 
 // walk dir
 extern crate walkdir;
@@ -12,13 +12,22 @@ use chrono::offset::{Utc, Local};
 use chrono::DateTime;
 use std::time::SystemTime;
 
+/** # get root path for `config/log4rs.yaml`
+ ## detail
+ - when we run `cargo run` from root path of project, executable file is under target/debug
+ - when we run `cargo build --release` from root path of project, executable file
+  is under target/release
+ - when we copy our target executable file to production, we assume `config/log4rs.yaml`
+  is located at the same folder with target executable file.
+*/
 #[allow(dead_code)]
 pub fn log_config_path() -> Result<String, &'static str> {
-    // get root path of development (debug or release) or production
-    // the sub folder config and log is under root.
-    // For debug development, executable file is under root/target/debug
-    // For release development, executable file is under root/target/release
-    // For production, executable file is under root directly
+    /*! # get root path of development (debug or release) or production
+     - the sub folder config and log is under root.
+     - For debug development, executable file is under root/target/debug
+     - For release development, executable file is under root/target/release
+     - For production, executable file is under root directly
+    */ 
     let pathexe = match std::env::current_exe(){
         Ok(res) => res,
         Err(err) => {
@@ -30,7 +39,7 @@ pub fn log_config_path() -> Result<String, &'static str> {
     let parent=root.file_name().unwrap().to_str().unwrap();  // get release or debug, or production parent folder
         
     let res = if parent == "debug" || parent == "release" {
-        root.parent().unwrap() // release
+        root.parent().unwrap() // debug or release
             .parent().unwrap() // target
             .to_str().unwrap()
     } else {
@@ -38,7 +47,13 @@ pub fn log_config_path() -> Result<String, &'static str> {
     };
     Ok(res.to_owned())
 }
-
+/** # each run with separate log file by timestamp as suffix in file name 
+ * log4rs will create file if not exist, but just append if exist
+ * If log4rs just create it, it is empty, no backup needed
+ * Create suffix using yyyymmdd_HHMMSS timestamp
+ * Copy log file to backup file and delete it (like rename)
+ * log4rs will still append (create if not exist)
+*/
 #[allow(dead_code)]
 pub fn rename_log_with_timestamp(pathstr: &str) -> Result<(), &'static str> {
     let path=PathBuf::from(&pathstr);
@@ -46,7 +61,7 @@ pub fn rename_log_with_timestamp(pathstr: &str) -> Result<(), &'static str> {
         Ok(res) => res,
         Err(err) => {
             error!("in rename_log_with_timestamp, log file {} does not exist: {}", pathstr, err);
-            return Ok(())
+            return Err("Check config/log4rs.yaml and log4rs!")
         }
     };
     if !md.is_file(){
@@ -81,6 +96,17 @@ pub fn rename_log_with_timestamp(pathstr: &str) -> Result<(), &'static str> {
     Ok(())
 }
 
+/** # Get file status, along with basic file operation
+ ## File status list:
+ - folder (dir name of the file, not include file name)
+ - file name 
+ - isdir (bool)
+ - type (just file extension)
+ - file size 
+ - timestamp for modifying
+ - timestamp for accessing
+ - timestamp for creating
+ */
 #[allow(dead_code)]
 #[derive(Debug)]
 pub struct FileStatus {
@@ -94,24 +120,27 @@ pub struct FileStatus {
     dt_created: String,
 }
 impl FileStatus {
+    /** # get file status
+     * timestamp uses format "%Y-%m-%d %H:%M:%S" for PostgreSQL
+     */
     #[allow(dead_code)]
     pub fn get_status(path: &PathBuf) -> Result<FileStatus, &'static str> {
-        // info!("in get_status: extension() is {:?}", path.extension());
         let ext=if path.extension().is_none(){""}else{path.extension().unwrap().to_str().unwrap()};
-        // info!("in get_status: ext is '{}' with length {}", ext, ext.len());
-        let base=path.file_stem().unwrap().to_str().unwrap();
+        // let base=path.file_stem().unwrap().to_str().unwrap();
+        let filename=path.file_name().unwrap().to_str().unwrap();
         let dir=path.parent().unwrap().to_str().unwrap();
         let md = std::fs::metadata(path).unwrap();
         let res=FileStatus {
             path: dir.to_string()
-            , name: if ext.len()==0 {base.to_string()} else {format!("{}.{}",base,ext)}
+            // , name: if ext.len()==0 {base.to_string()} else {format!("{}.{}",base,ext)}
+            , name: filename.to_string()
             , isdir: md.is_dir()
             , filetype: ext.to_string()
             , size: md.len()
             ,dt_modified: if let Ok(time) = md.modified() {
                 let datetime: chrono::DateTime<chrono::offset::Local> = time.into();
                 // datetime.format("%Y%m%d_%H%M%S").to_string()
-                datetime.format("%Y-%m-%d %H:%M:%S").to_string()
+                datetime.format("%Y-%m-%d %H:%M:%S").to_string() // format for postgreSQL
                 }else{return Err("failed to get modified time!");}
             ,dt_accessed: if let Ok(time) = md.accessed() {
                 let datetime: chrono::DateTime<chrono::offset::Local> = time.into();
@@ -124,6 +153,15 @@ impl FileStatus {
         };
         Ok(res)
     }
+    /** # get file status for all files under one folder
+     - Output is String, not FileStatus struct
+       - each line with one file status
+       - the delimiter for fields in one line can be modified
+       - new line symbol and delimiter are used when import data into PostgreSQL
+     - argument path as string slide can be relative path from root path (executable file path)
+     - argument mntpoint is used to replace /mnt by //Ip_address for workstation independence
+     - The method walkdir::WalkDir is used for all sub folders
+     */
     #[allow(dead_code)]
     pub fn get_file_status_under_folder(path: &str, 
         delimiter: &str,     // for data base import
@@ -155,6 +193,9 @@ impl FileStatus {
         }
         Ok(res)
     }
+    /** # delete file
+     * ignore others like folder, link, etc.
+     */
     #[allow(dead_code)]
     pub fn delete_file(path: &str, 
     ) -> Result<(), &'static str> {
@@ -179,6 +220,11 @@ impl FileStatus {
         }
         Ok(())
     }
+    /** # copy file
+     * Do not copy if destination file exist
+     * Create destination folder if not exist
+     * check destination file existence before calling this method to avoid error
+     */
     #[allow(dead_code)]
     pub fn copy_file(ori_path: &str, 
         dest_path: &str,

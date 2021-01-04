@@ -1,11 +1,8 @@
 /target
-# try doc
-!/target/doc
-
-# Let lib in the same repository
-/libs/*/.gitignore
-/libs/*/.git
-/libs/*/target
-
+# /target/debug
+# /target/release
+# /target/rls
+# /target/doc
+/target/.rustc_info.json
 # log files
 /log

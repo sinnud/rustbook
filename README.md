@@ -4,6 +4,7 @@ Use postgresql data base to handle WD net drives.
 ## functions
 - Refresh table in postgresql based on file structure on WD net drives.
 - Sync two WD net drives based on database.
+- Check out [doc](https://sinnud.github.io/rust_wdinfo/doc/settings.html) for documentation.
 
 ## Interesting Rust skill
 - Use rust library structure. See Cargo.toml
@@ -22,3 +23,4 @@ Use postgresql data base to handle WD net drives.
 - Build executable file only `cargo build --bins`
 - Build and run `cargo run`
 - Build documentation (only my code) `cargo doc --no-deps`
+  - command to github.io: `ln -s /var/local/usersetting/gitdev/sinnud.github.io/rust_wdinfo/doc target/.`

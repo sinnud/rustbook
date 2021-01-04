@@ -1,4 +1,4 @@
-// PostgreSQL related libraries
+/*! PostgreSQL related functions and metods */
 // postgresql
 use postgres::{Client, NoTls, Row};
 use postgres::types::ToSql;
@@ -8,7 +8,9 @@ use std::io::Write;
 use percent_encoding::{utf8_percent_encode, AsciiSet, CONTROLS};
 // walk dir
 
-// in case when your password have symbol out of URL set, like !@ (see below)
+/** # URL encode
+ * in case when your password have symbol out of URL set, like !@ (see src code)
+ */
 #[allow(dead_code)]
 pub fn url_encode(ori: &str) -> String {
     /// https://url.spec.whatwg.org/#fragment-percent-encode-set
@@ -20,10 +22,22 @@ pub fn url_encode(ori: &str) -> String {
     ori
 }
 
+/** # PostgreSQL
+ * Connect to PostgreSQL
+ * Execute queries to PostgreSQL
+ * import data into PostgreSQL
+ */
 pub struct PostgreSQL{
     pub conn: Client,
 }
+/** # Default initialization of PostgreSQL
+ * use as defalt
+ */
 impl Default for PostgreSQL {
+    /** # default method
+     * Use postgres::Client::connect method
+     * PostgreSQL database installed in 192.168.1.213
+     */
     #[allow(dead_code)]
     fn default() -> Self {
         let pw_url=url_encode("Jeffery45!@");
@@ -41,6 +55,13 @@ impl Default for PostgreSQL {
     }
 }
 impl PostgreSQL {
+    /** # customer connection
+     * You can provide:
+       * host as string
+       * username as string
+       * password as string
+       * database as string
+     */
     #[allow(dead_code)]
     pub fn new(host: String,
                username: String,
@@ -62,6 +83,11 @@ impl PostgreSQL {
         }
         )
     }
+    /** # submit query without return values
+     - The number of rows updated will point out as info! in log
+     - You can use $1, $2, etc. along with vector of string slide also, 
+     see detail in postgress::client.execute method
+     */
     #[allow(dead_code)]
     pub fn execute(&mut self,
         qry: &str,
@@ -77,6 +103,10 @@ impl PostgreSQL {
         info!("number of rows updated: {}", row_updated);
         Ok(())
     }
+    /** # submit query and catch the output
+     * output is vector of postgres::Row
+     * Leave it to be handled by the following code
+     */
     #[allow(dead_code)]
     pub fn query(&mut self,
         qry: &str,
@@ -92,6 +122,10 @@ impl PostgreSQL {
         // info!("length of result: {}", vr.len());
         Ok(vr)
     }
+    /** # check if table exist
+     * Return bool
+     * need schema and table name as argument
+     */
     #[allow(dead_code)]
     pub fn table_exist(&mut self,
         skm: &str,
@@ -109,6 +143,9 @@ impl PostgreSQL {
         // info!("{}", res);
         Ok(res>0)
     }
+    /** # drop table
+     * need schema and table name as argument
+     */
     #[allow(dead_code)]
     pub fn drop_table(&mut self,
         skm: &str,
@@ -125,6 +162,9 @@ impl PostgreSQL {
             }
         }
     }
+    /** # truncate table
+     * need schema and table name as argument
+     */
     #[allow(dead_code)]
     pub fn truncate_table(&mut self,
         skm: &str,
@@ -171,6 +211,9 @@ impl PostgreSQL {
         // };
         // Ok(())
     }
+    /** # create table
+     * need schema, table name, and table structure (String) as argument
+     */
     #[allow(dead_code)]
     pub fn create_table(&mut self,
         skm: &str,
@@ -190,6 +233,9 @@ impl PostgreSQL {
             }
         }
     }
+    /** # create or truncate table
+     * need schema, table name, and table structure (String) as argument
+     */
     #[allow(dead_code)]
     pub fn create_truncate_table(&mut self,
         skm: &str,
@@ -221,6 +267,9 @@ impl PostgreSQL {
         }
         Ok(())
     }
+    /** # import data into PostgreSQL table
+     * need query and data string as argument
+     */
     #[allow(dead_code)]
     pub fn import_data(&mut self,
         qry: &str,

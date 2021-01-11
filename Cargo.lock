@@ -1863,6 +1863,7 @@ dependencies = [
  "chrono",
  "log",
  "log4rs",
+ "md5",
  "mysql",
  "percent-encoding",
  "postgres",

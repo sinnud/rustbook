@@ -9,6 +9,10 @@ under the same folder the executable program located `config/log4rs.yaml`.
   - log file will be archived using timestamp at the beginning of run.
 - Support command line arguments. See [envargs](../lib_wd/envargs/index.html).
  */
+#[macro_use]
+extern crate log;
+extern crate log4rs;
+use wdinfo::sqltrait::{SQL, SQLret};
 /*
 fn main()-> Result<(), &'static str>{
     let root=wdinfo::file_status::log_config_path()?;
@@ -80,6 +84,123 @@ pub fn envargs() ->Result<String, &'static str> {
 }
 */
 fn main()-> Result<(), &'static str>{
-    let mut ms=wdinfo::libmysql::LibMySQL::default();
+    let root=wdinfo::file_status::log_config_path()?;
+    
+    // log file is log/wdinfo.log. see config/log4ts.yaml
+    let logfile=format!("{}/log/wdinfo.log", root);
+    let log4rs_yaml=format!("{}/config/log4rs.yaml", root);
+    
+    wdinfo::file_status::rename_log_with_timestamp(&logfile)?;
+    log4rs::init_file(&log4rs_yaml, Default::default()).unwrap();
+    
+    // info!("Connect to MySql using default...");
+    // let mut ms=wdinfo::libmysql::LibMySQL::default();
+    info!("Connect to MySql using new method...");
+    let mut ms=wdinfo::libmysql::LibMySQL::new("192.168.1.213".to_owned(),
+        "sinnud".to_owned(),
+        "Jeffery45!@".to_owned(),
+        "wdinfo".to_owned()
+    )?;
+    info!("Submit one query without return...");
+    ms.execute_queries_no_return("drop table if exists wdinfo.sinnud; create table wdinfo.sinnud (like wdinfo.data)")?;
+    info!("Submit one query without return...");
+    let rows: Vec<mysql::Row> = ms.execute_query_with_return("select * from wdinfo.sinnud")?;
+    info!("Return {} rows.", rows.len());
+    info!("check table exists...");
+    if ms.check_table_exists("wdinfo", "sinnud")?{
+        info!("Table exists!");
+    } else {
+        info!("Table DOES NOT exist!");
+    }
+    info!("create_truncate_table...");
+    ms.create_truncate_table("wdinfo", "_file_st", "filename text, folder text, type text, fullpath text, filesize bigint, filecreate_dt timestamp")?;
+    
+    info!("Connect to PostgreSql using default...");
+    let mut pg=wdinfo::postgresql::PostgreSQL::default();
+    info!("Submit one query without return...");
+    pg.execute_queries_no_return("drop table if exists wdinfo.sinnud; create table wdinfo.sinnud (like wdinfo.data243)")?;
+    info!("Submit one query without return...");
+    let rows: Vec<postgres::Row> = pg.execute_query_with_return("select * from wdinfo.sinnud")?;
+    info!("Return {} rows.", rows.len());
+    info!("check table exists...");
+    if pg.check_table_exists("wdinfo", "sinnud")?{
+        info!("Table exists!");
+    } else {
+        info!("Table DOES NOT exist!");
+    }
+    info!("create_truncate_table...");
+    pg.create_truncate_table("wdinfo", "_file_st", "filename text, folder text, type text, fullpath text, filesize bigint, filecreate_dt timestamp")?;
+    
+    // let mut file = match std::fs::File::open("/home/user/bulb"){
+    //     Ok(res) => res,
+    //     Err(err) => {
+    //         error!("Error open file: {}", err);
+    //         return Err("Failed open file!");
+    //     }
+    // };
+    // let mut contents = String::new();
+    // use std::io::prelude::*;
+    // match file.read_to_string(&mut contents){
+    //     Ok(_) => (),
+    //     Err(err) => {
+    //         error!("Error read file: {}", err);
+    //         return Err("Failed read file!");
+    //     }
+    // };
+    // ms.import_data("wdinfo", "sinnud", contents)?;
+    
+    /*
+    info!("clean server file...");
+    let output = std::process::Command::new("ssh")
+                     .arg("-i")
+                     .arg("/home/user/.ssh/ubuntu_sinnud.pem")
+                     .arg("sinnud@192.168.1.213")
+                     .arg("sudo")
+                     .arg("rm")
+                     .arg("-f")
+                     .arg("/tmp/bulb")
+                     .output()
+                     .expect("failed to execute process");
+    // println!("status: {}", output.status);
+    // println!("stdout: {}", String::from_utf8_lossy(&output.stdout));
+    // println!("stderr: {}", String::from_utf8_lossy(&output.stderr));
+    info!("export data to server file...");
+    ms.execute("select * from movie limit 10 into outfile '/tmp/bulb'")?;
+    info!("load data from server file...");
+    ms.execute("load data infile '/tmp/bulb' into table sinnud")?;
+    
+    info!("Submit one query with return...");
+    let rows = ms.query("select * from movie limit 2")?;
+    // info!("result length: {}", rows.len());
+    // let mut v: Vec<String> = Vec::with_capacity(rows.len());
+    // for row in rows{
+    //     let elm: String=row.get(0);
+    //     v.push(elm);
+    // }
+    // debug!("result value:\n{}", v.join("\n"));
+    info!("Result: {:?}", rows);
+    info!("Check table exists...");
+    if ms.table_exist("wdinfo", "data")? {
+        info!("Table wdinfo.data exists.");
+    }
+    info!("drop table...");
+    ms.drop_table("wdinfo", "sinnud")? ;
+    info!("truncate table: create...");
+    // ms.execute("drop table if exists sinnud; create table sinnud (like data)")?;
+    let tblstr="`index` bigint, filename text, folder text, file_type text, fullpath text, filesize bigint, createtime datetime";
+    ms.create_table("wdinfo", "sinnud", tblstr)? ;
+    info!("truncate table: insert...");
+    ms.execute("insert into sinnud select * from data limit 10")?;
+    info!("truncate table...");
+    ms.truncate_table("wdinfo", "sinnud")? ;
+    info!("create_truncate_table...");
+    ms.create_truncate_table("wdinfo", "sinnud", tblstr)? ;
+    
+    let x = md5::compute("qwertyuiopasdfghjklzxcvbnm");
+    let s = format!("{:x}", x);
+    let s8 = &s[0..8];
+    info!("MD5 of qwertyuiopasdfghjklzxcvbnm is {} and short {}", s, s8);
+    info!("Finished");
+    */
     Ok(())
 }

@@ -15,6 +15,8 @@ log4rs = "*"
 #log4rs-rolling-file = "*"
 # env_logger = "*"
 mysql = "*"
+#md5 hash
+md5 = "*"
 
 #--------------------------------------------#
 # compile command: cargo build --lib --bins  #

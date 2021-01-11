@@ -1,16 +1,18 @@
 /*! WD sync tool
- * Use PostgreSQL and FileStatus
+ * Use SQL and FileStatus
  */
-// #[allow(unused_imports)]
-// #[macro_use]
-// extern crate log;
-// extern crate log4rs;
+
+// use trait
+#[allow(unused_imports)]
+use crate::sqltrait::SQL;
+#[allow(unused_imports)]
+use crate::libmysql::LibMySQL;
 #[allow(unused_imports)]
 use crate::postgresql::PostgreSQL;
-#[allow(unused_imports)]
 use crate::file_status::FileStatus;
+
 /** # WDInfo struct
- * pg as PostgreSQL connection (public)
+ * db as database connection (public, to PostgreSQL or MySql, will have more in future)
  * temporary schema, default `wdinfo`
  * temporary table for PostgreSQL::import_data, default `_file_st`
  * table structure for temporary table (string)
@@ -20,7 +22,7 @@ use crate::file_status::FileStatus;
  * prefix string for 192.168.1.243, default `//192.168.1.243/`
  */
 pub struct WDInfo{
-    pub pg: PostgreSQL,
+    pub db: &dyn SQL,
     tmp_skm: String,
     tmp_tbl: String,
     tbl_str: String,
@@ -29,12 +31,13 @@ pub struct WDInfo{
     pre241: String,
     pre243: String,
 }
-impl Default for WDInfo {
+
+impl<T> Default for WDInfo<T> {
     /** # default function for WDInfo */
     #[allow(dead_code)]
     fn default() -> Self {
         WDInfo{
-            pg: PostgreSQL::default(),
+            db: None,
             tmp_skm: "wdinfo".to_owned(),
             tmp_tbl: "_file_st".to_owned(),
             tbl_str: "filename text, folder text, type text, fullpath text, filesize bigint, filecreate_dt timestamp".to_owned(),
@@ -45,7 +48,8 @@ impl Default for WDInfo {
         }
     }
 }
-impl WDInfo {
+
+impl<T> WDInfo<T> {
     /** # WD refresh: refresh PostgreSQL table based on files on WD net drive
      * Like one interface of this library
      * Calls self.fs_import_pg and self.wdinfo_refresh
@@ -101,29 +105,11 @@ impl WDInfo {
         Ok(())
     }
     /** # WDInfo initialization, other than default
-     * use customer defined PostgreSQL connection arguments
-     * Other private elements are still using default
+     * use customer defined private elements
+     * Database part leave to outside
      */
     #[allow(dead_code)]
-    pub fn new(host: String,
-        username: String,
-        password: String,
-        database: String,
-    ) -> Result<Self, &'static str> {
-        Ok(WDInfo {
-            pg: PostgreSQL::new(host, username, password, database)?,
-            ..Self::default()
-        })
-    }
-    /** # WDInfo initialization, other than default
-     * use customer defined PostgreSQL connection arguments
-     * And other private elements
-     */
-    #[allow(dead_code)]
-    pub fn new_special(host: String,
-        username: String,
-        password: String,
-        database: String,
+    pub fn new(
         tmp_skm: String,
         tmp_tbl: String,
         tbl_str: String,
@@ -133,7 +119,7 @@ impl WDInfo {
         pre243: String,
     ) -> Result<Self, &'static str> {
         Ok(WDInfo {
-            pg: PostgreSQL::new(host, username, password, database)?,
+            db: None,
             tmp_skm: tmp_skm,
             tmp_tbl: tmp_tbl,
             tbl_str: tbl_str,
@@ -154,7 +140,7 @@ impl WDInfo {
         let qry=format!("select max({})::text from {}.{}", self.insdt, skm, tbl);
         info!("in WDInfo::last_insert_dt() query is\n{}", qry);
         let qry=&qry[..];
-        let row = match self.pg.conn.query_one(qry, &[]){
+        let row = match self.db.conn.query_one(qry, &[]){
             Ok(row) => row,
             Err(err) => {
                 error!("in WDInfo::last_insert_dt(): query_one {:?}", err);
@@ -167,7 +153,7 @@ impl WDInfo {
     /** # Check WD net drive, import FileStatus into PostgreSQL temporary table
      * The time consuming function: log start and finish status
      * call FileStatus::get_file_status_under_folder with dilimeter "|", then
-     * call self.pg.import_data with query using dilimeter "|"
+     * call self.db.import_data with query using dilimeter "|"
      */
     #[allow(dead_code)]
     pub fn fs_import_pg(&mut self,
@@ -186,7 +172,7 @@ impl WDInfo {
         // Counting Newlines Really Fast code from https://llogiq.github.io/2016/09/24/newline.html
         info!("in WDInfo::fs_import_pg() file number is {}", fs.as_bytes().iter().filter(|&&c| c == b'\n').count());
         
-        match self.pg.create_truncate_table(&self.tmp_skm, &self.tmp_tbl, &self.tbl_str){
+        match self.db.create_truncate_table(&self.tmp_skm, &self.tmp_tbl, &self.tbl_str){
             Ok(_) => (),
             Err(err) => {
                 error!("in WDInfo::fs_import_pg(): create_truncate_table {:?}", err);
@@ -196,7 +182,7 @@ impl WDInfo {
         let qry=format!("COPY {}.{} FROM STDIN DELIMITER '|'", self.tmp_skm, self.tmp_tbl);
         debug!("in WDInfo::fs_import_pg() query is\n{}", qry);
         let qry=&qry[..];
-        match self.pg.import_data(qry, fs){
+        match self.db.import_data(qry, fs){
             Ok(_) => (),
             Err(err) => {
                 error!("in WDInfo::fs_import_pg(): import_data {:?}", err);
@@ -223,7 +209,7 @@ impl WDInfo {
                         );
         info!("in WDInfo::wdinfo_update query 1: \n{}", qry);
         let qry=&qry[..];
-        match self.pg.execute(qry, &[]){
+        match self.db.execute(qry, &[]){
             Ok(_) => (),
             Err(err) => {
                 error!("in WDInfo::wdinfo_update(): execute {:?}", err);
@@ -239,7 +225,7 @@ impl WDInfo {
                        );
         info!("in WDInfo::wdinfo_update query 2: \n{}", qry);
         let qry=&qry[..];
-        match self.pg.execute(qry, &[]){
+        match self.db.execute(qry, &[]){
             Ok(_) => (),
             Err(err) => {
                 error!("in WDInfo::wdinfo_update(): execute {:?}", err);
@@ -257,7 +243,7 @@ impl WDInfo {
         skm: &str,
         tbl: &str,
     ) -> Result<(), &'static str> {
-        match self.pg.truncate_table(&skm, &tbl){
+        match self.db.truncate_table(&skm, &tbl){
             Ok(_) => (),
             Err(err) => {
                 error!("in WDInfo::wdinfo_refresh(): truncate_table {:?}", err);
@@ -269,7 +255,7 @@ impl WDInfo {
                        );
         debug!("in WDInfo::wdinfo_refresh query: \n{}", qry);
         let qry=&qry[..];
-        match self.pg.execute(qry, &[]){
+        match self.db.execute(qry, &[]){
             Ok(_) => (),
             Err(err) => {
                 error!("in WDInfo::wdinfo_refresh(): execute {:?}", err);
@@ -279,7 +265,7 @@ impl WDInfo {
         Ok(())
     }
     /** # compare tables for records represent different WD net drive for sync later
-     * call self.pg.query with return Vec<Row>
+     * call self.db.query with return Vec<Row>
      * convert return to Vec<String>
      */
     // select a.* from music243 a left join music241 b on substr(a.fullpath,16)=substr(b.fullpath,23) 
@@ -300,7 +286,7 @@ impl WDInfo {
         qry.push_str(&qry2);
         debug!("In WDInfo::wdinfo_compare query: \n{}", qry);
         let qry=&qry[..];
-        let rows = match self.pg.query(qry, &[]){
+        let rows = match self.db.query(qry, &[]){
             Ok(res) => res,
             Err(err) => {
                 error!("In WDInfo::wdinfo_compare(): query {:?}", err);
@@ -351,7 +337,7 @@ impl WDInfo {
             skm, oldtbl, &dir241, &full241, skm, newtbl, self.keyvar, &fullstr);
         // info!("In WDInfo::wdinfo_sync_one query: \n{}", qry);
         let qry=&qry[..];
-        match self.pg.execute(qry, &[]){
+        match self.db.execute(qry, &[]){
             Ok(_) => (),
             Err(err) => {
                 error!("In wdinfo_sync_one, execute errored:\n{}", err);

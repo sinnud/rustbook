@@ -65,7 +65,7 @@ pub fn rename_log_with_timestamp(pathstr: &str) -> Result<(), &'static str> {
         Ok(res) => res,
         Err(err) => {
             error!("in rename_log_with_timestamp, log file {} does not exist: {}", pathstr, err);
-            return Err("Check config/log4rs.yaml and log4rs!")
+            return Ok(())
         }
     };
     if !md.is_file(){

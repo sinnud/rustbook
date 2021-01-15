@@ -6,7 +6,7 @@
 #[allow(unused_imports)]
 use std::io::Write;
 // use trait
-use crate::sqltrait::{SQL, SQLret};
+use crate::sqltrait::SQL;
 
 /** # PostgreSQL
  * Connect to PostgreSQL
@@ -84,17 +84,28 @@ impl SQL for PostgreSQL {
      * need schema and table name as argument
      */
     fn check_table_exists(&mut self, skm: &str, tbl: &str) -> Result<bool, &'static str>{
-        let qry="SELECT count(*)::int FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE='BASE TABLE' AND TABLE_SCHEMA=$1 AND TABLE_NAME=$2";
-        let row = match self.conn.query_one(qry, &[&skm, &tbl]){
+        let qry=format!("SELECT count(*)::text FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE='BASE TABLE' AND TABLE_SCHEMA='{}' AND TABLE_NAME='{}'",
+            skm, tbl,
+        );
+        let rows = match self.execute_query_with_return(&qry){
             Ok(res) => res,
             Err(err) => {
-                error!("in PostgreSQL::table_exist(): {:?}", err);
-                return Err("Failed to run PostgreSQL::table_exist!");
+                error!("in PostgreSQL::check_table_exist(): {:?}", err);
+                return Err("Failed to run PostgreSQL::check_table_exist!");
             }
         };
-        let res: i32 = row.get(0);
-        // info!("{}", res);
-        Ok(res>0)
+        for row in &rows {
+            // println!("DEBUG: {}", row);
+            let res: i32 = match row.split("\t").nth(0).unwrap().parse::<i32>(){
+                Ok(res) => res,
+                Err(err) => {
+                    error!("in PostgreSQL::check_table_exist(): {:?}", err);
+                    return Err("Failed to run PostgreSQL::check_table_exist!");
+                }
+            };
+            return Ok(res>0)
+        }
+        Ok(false)
     }
     /** # drop table
      * need schema and table name as argument
@@ -144,7 +155,8 @@ impl SQL for PostgreSQL {
      * need query and data string as argument
      */
     fn import_data(&mut self, skm: &str, tbl: &str, datastring: String) -> Result<(), &'static str>{
-        let qry=format!("COPY {}.{} FROM STDIN DELIMITER '|'", skm, tbl);
+        // let qry=format!("COPY {}.{} FROM STDIN DELIMITER '|'", skm, tbl);
+        let qry=format!("COPY {}.{} FROM STDIN", skm, tbl);
         let qry=&qry[..];
         let mut writer = match self.conn.copy_in(qry){
             Ok(w) => w,
@@ -170,16 +182,11 @@ impl SQL for PostgreSQL {
         };
         Ok(())
     }
-}
-
-impl SQLret for PostgreSQL {
-    // type Output = PostgreSQL;
-    type Row = postgres::Row;
     /** # submit query and catch the output
-     * output is vector of postgres::Row
+     * output is vector of String with [tab] as delimiter
      * Leave it to be handled by the following code
      */
-    fn execute_query_with_return(&mut self, qry: &str) -> Result<Vec<Self::Row>, &'static str>{
+    fn execute_query_with_return(&mut self, qry: &str) -> Result<Vec<String>, &'static str>{
         let vr = match self.conn.query(qry, &[]){
             Ok(res) => res,
             Err(err) => {
@@ -187,10 +194,24 @@ impl SQLret for PostgreSQL {
                 return Err("Failed to run query!");
             }
         };
-        // info!("length of result: {}", vr.len());
-        Ok(vr)
+        let mut vs: Vec<String> = Vec::with_capacity(vr.len());
+        for row in &vr {
+            let mut line = String::new();
+            let clms=row.len();
+            for i in 0..clms {
+                // let cstr: String = row.get(i).parse::<&str>().unwrap();
+                let cstr: String = row.get(i);
+                line.push_str(&cstr);
+                if i+1 < clms {
+                    line.push_str("\t");
+                }
+            }
+            vs.push(line);
+        }
+        Ok(vs)
     }
 }
+
 
 #[cfg(test)]
 mod tests {

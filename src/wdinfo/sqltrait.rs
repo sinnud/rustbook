@@ -1,3 +1,4 @@
+/*! TRAIT for data base like postgresql and mysql */
 
 // URL encoding for connecting to postgresql
 use percent_encoding::{utf8_percent_encode, AsciiSet, CONTROLS};
@@ -18,7 +19,6 @@ pub fn url_encode(ori: &str) -> String {
 /** # trait SQL
  * function definition. implementation will be in postgresql.rs and libmysql.rs (may more later)
  * With default define here.
- * 
  * One exception: create_truncate_table just define here since it just call functions defined here.
  */
 pub trait SQL {
@@ -72,21 +72,7 @@ pub trait SQL {
         error!("Check if you implement create_table({}, {}, {})!!!", skm, tbl, &datastring);
         Err("See above...")
     }
-}
-/** # trait SQL
- * function definition. implementation will be in postgresql.rs and libmysql.rs (may more later)
- * With default define here.
- * 
- * One function with return.
- */
-pub trait SQLret {
-    // type Output;
-    type Row;
-    // fn new(host: String, username: String, password: String, database: String) -> Result<Self::Output, &'static str> {
-    //     error!("Check if you implement new({}, {}, {}, {})!!!", host, username, password, database);
-    //     Err("See above...")
-    // }
-    fn execute_query_with_return(&mut self, qry: &str) -> Result<Vec<Self::Row>, &'static str>{
+    fn execute_query_with_return(&mut self, qry: &str) -> Result<Vec<String>, &'static str>{
         error!("Check if you implement execute_query_with_return({})!!!", qry);
         Err("See above...")
     }

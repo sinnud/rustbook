@@ -11,6 +11,7 @@ use crate::libmysql::LibMySQL;
 use crate::postgresql::PostgreSQL;
 use crate::file_status::FileStatus;
 
+
 /** # WDInfo struct
  * db as database connection (public, to PostgreSQL or MySql, will have more in future)
  * temporary schema, default `wdinfo`
@@ -21,8 +22,8 @@ use crate::file_status::FileStatus;
  * prefix string for 192.168.1.241, default `//192.168.1.241/public/`
  * prefix string for 192.168.1.243, default `//192.168.1.243/`
  */
-pub struct WDInfo{
-    pub db: &dyn SQL,
+pub struct WDInfo <T: SQL> {
+    pub db: T,
     tmp_skm: String,
     tmp_tbl: String,
     tbl_str: String,
@@ -31,13 +32,12 @@ pub struct WDInfo{
     pre241: String,
     pre243: String,
 }
-
-impl<T> Default for WDInfo<T> {
+impl<T: SQL> WDInfo<T> {
     /** # default function for WDInfo */
     #[allow(dead_code)]
-    fn default() -> Self {
+    pub fn initialization(p: T) -> Self {
         WDInfo{
-            db: None,
+            db: p,
             tmp_skm: "wdinfo".to_owned(),
             tmp_tbl: "_file_st".to_owned(),
             tbl_str: "filename text, folder text, type text, fullpath text, filesize bigint, filecreate_dt timestamp".to_owned(),
@@ -47,9 +47,6 @@ impl<T> Default for WDInfo<T> {
             pre243: "//192.168.1.243/".to_owned(),
         }
     }
-}
-
-impl<T> WDInfo<T> {
     /** # WD refresh: refresh PostgreSQL table based on files on WD net drive
      * Like one interface of this library
      * Calls self.fs_import_pg and self.wdinfo_refresh
@@ -104,31 +101,6 @@ impl<T> WDInfo<T> {
         }
         Ok(())
     }
-    /** # WDInfo initialization, other than default
-     * use customer defined private elements
-     * Database part leave to outside
-     */
-    #[allow(dead_code)]
-    pub fn new(
-        tmp_skm: String,
-        tmp_tbl: String,
-        tbl_str: String,
-        insdt: String,
-        keyvar: String,
-        pre241: String,
-        pre243: String,
-    ) -> Result<Self, &'static str> {
-        Ok(WDInfo {
-            db: None,
-            tmp_skm: tmp_skm,
-            tmp_tbl: tmp_tbl,
-            tbl_str: tbl_str,
-            insdt: insdt,
-            keyvar: keyvar,
-            pre241: pre241,
-            pre243: pre243,
-        })
-    }
     /** # Check last time refresh of PostgreSQL table based on WD net drive
      * (not used?)
      */
@@ -139,16 +111,19 @@ impl<T> WDInfo<T> {
     ) -> Result<String, &'static str> {
         let qry=format!("select max({})::text from {}.{}", self.insdt, skm, tbl);
         info!("in WDInfo::last_insert_dt() query is\n{}", qry);
-        let qry=&qry[..];
-        let row = match self.db.conn.query_one(qry, &[]){
+        let rows = match self.db.execute_query_with_return(&qry){
             Ok(row) => row,
             Err(err) => {
                 error!("in WDInfo::last_insert_dt(): query_one {:?}", err);
                 return Err("Failed to run WDInfo::last_insert_dt!");
             }
         };
-        let dt: String = row.get(0);
-        Ok(dt)
+        for row in &rows {
+            // let res: i32 = row.get(0).unwrap();
+            let res: String = row.split("\t").nth(0).unwrap().to_owned();
+            return Ok(res)
+        }
+        Ok("check!!!".to_owned())
     }
     /** # Check WD net drive, import FileStatus into PostgreSQL temporary table
      * The time consuming function: log start and finish status
@@ -162,7 +137,7 @@ impl<T> WDInfo<T> {
         info!("in WDInfo::fs_import_pg({}) start...", path);
         // let mntpoint=if path contains "/public/" then "//192.168.1.241/" else "//192.168.1.243/";
         let mntpoint=if path.contains("/public/"){"//192.168.1.241/"} else {"//192.168.1.243/"};
-        let fs=match FileStatus::get_file_status_under_folder(path, "|", &mntpoint){
+        let fs=match FileStatus::get_file_status_under_folder(path, "\t", &mntpoint){
             Ok(res) => res,
             Err(err) => {
                 error!("in WDInfo::fs_import_pg(): get_file_status_under_folder ({}) {:?}", path, err);
@@ -179,10 +154,7 @@ impl<T> WDInfo<T> {
                 return Err("Failed to run WDInfo::fs_import_pg!");
             }
         };
-        let qry=format!("COPY {}.{} FROM STDIN DELIMITER '|'", self.tmp_skm, self.tmp_tbl);
-        debug!("in WDInfo::fs_import_pg() query is\n{}", qry);
-        let qry=&qry[..];
-        match self.db.import_data(qry, fs){
+        match self.db.import_data(&self.tmp_skm, &self.tmp_tbl, fs){
             Ok(_) => (),
             Err(err) => {
                 error!("in WDInfo::fs_import_pg(): import_data {:?}", err);
@@ -208,8 +180,7 @@ impl<T> WDInfo<T> {
                         skm, tbl, self.keyvar, self.keyvar, skm, tbl, self.tmp_skm, self.tmp_tbl, self.keyvar, self.keyvar, self.keyvar,
                         );
         info!("in WDInfo::wdinfo_update query 1: \n{}", qry);
-        let qry=&qry[..];
-        match self.db.execute(qry, &[]){
+        match self.db.execute_queries_no_return(&qry){
             Ok(_) => (),
             Err(err) => {
                 error!("in WDInfo::wdinfo_update(): execute {:?}", err);
@@ -224,8 +195,7 @@ impl<T> WDInfo<T> {
                         skm, tbl, skm, tbl, self.tmp_skm, self.tmp_tbl, self.keyvar, self.keyvar, self.keyvar,
                        );
         info!("in WDInfo::wdinfo_update query 2: \n{}", qry);
-        let qry=&qry[..];
-        match self.db.execute(qry, &[]){
+        match self.db.execute_queries_no_return(&qry){
             Ok(_) => (),
             Err(err) => {
                 error!("in WDInfo::wdinfo_update(): execute {:?}", err);
@@ -243,19 +213,21 @@ impl<T> WDInfo<T> {
         skm: &str,
         tbl: &str,
     ) -> Result<(), &'static str> {
-        match self.db.truncate_table(&skm, &tbl){
+        let mut finaltblstr=self.tbl_str.clone();
+        finaltblstr.push_str(", inserted_dt timestamp");
+        match self.db.create_truncate_table(&skm, &tbl, &finaltblstr){
             Ok(_) => (),
             Err(err) => {
                 error!("in WDInfo::wdinfo_refresh(): truncate_table {:?}", err);
                 return Err("Failed to run WDInfo::wdinfo_refresh!");
             }
         };
-        let qry=format!("insert into {}.{} select *, now()::timestamp from {}.{}",
+        // let qry=format!("insert into {}.{} select *, now()::timestamp from {}.{}",
+        let qry=format!("insert into {}.{} select *, now() from {}.{}",
                         skm, tbl, self.tmp_skm, self.tmp_tbl,
                        );
-        debug!("in WDInfo::wdinfo_refresh query: \n{}", qry);
-        let qry=&qry[..];
-        match self.db.execute(qry, &[]){
+        // info!("in WDInfo::wdinfo_refresh query: \n{}", qry);
+        match self.db.execute_queries_no_return(&qry){
             Ok(_) => (),
             Err(err) => {
                 error!("in WDInfo::wdinfo_refresh(): execute {:?}", err);
@@ -285,8 +257,7 @@ impl<T> WDInfo<T> {
                        );
         qry.push_str(&qry2);
         debug!("In WDInfo::wdinfo_compare query: \n{}", qry);
-        let qry=&qry[..];
-        let rows = match self.db.query(qry, &[]){
+        let rows = match self.db.execute_query_with_return(&qry){
             Ok(res) => res,
             Err(err) => {
                 error!("In WDInfo::wdinfo_compare(): query {:?}", err);
@@ -296,7 +267,7 @@ impl<T> WDInfo<T> {
         info!("In wdinfo_compare, new file number: {}", rows.len());
         let mut v: Vec<String> = Vec::with_capacity(rows.len());
         for row in rows{
-            let elm: String=row.get(0);
+            let elm: String=row.split("\t").nth(0).unwrap().to_owned();
             v.push(elm);
         }
         debug!("New file list:\n{}", v.join("\n"));
@@ -335,9 +306,7 @@ impl<T> WDInfo<T> {
         // filename | folder | type | fullpath | filesize | filecreate_dt | inserted_dt
         let qry=format!("insert into {}.{} select filename, '{}', type, '{}', filesize, filecreate_dt, now()::timestamp from {}.{} where {}='{}'",
             skm, oldtbl, &dir241, &full241, skm, newtbl, self.keyvar, &fullstr);
-        // info!("In WDInfo::wdinfo_sync_one query: \n{}", qry);
-        let qry=&qry[..];
-        match self.db.execute(qry, &[]){
+        match self.db.execute_queries_no_return(&qry){
             Ok(_) => (),
             Err(err) => {
                 error!("In wdinfo_sync_one, execute errored:\n{}", err);

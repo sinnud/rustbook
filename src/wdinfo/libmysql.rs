@@ -11,7 +11,7 @@ use std::io::Write;
 // use url_encode
 use crate::sqltrait::url_encode;
 // use trait
-use crate::sqltrait::{SQL, SQLret};
+use crate::sqltrait::SQL;
 
 /** # LibMySQL
  * Connect to MySQL
@@ -107,8 +107,9 @@ impl SQL for LibMySQL {
      * need schema and table name as argument
      */
     fn check_table_exists(&mut self, skm: &str, tbl: &str) -> Result<bool, &'static str>{
-        let qry=format!("SELECT count(*) as cnt FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA='{}' AND TABLE_NAME='{}'",
+        let qry=format!("SELECT cast(count(*) as nchar) as cnt FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA='{}' AND TABLE_NAME='{}'",
                 skm, tbl);
+        // info!("DEBUG: query: {}", qry);
         let rows = match self.execute_query_with_return(&qry){
             Ok(res) => res,
             Err(err) => {
@@ -116,8 +117,11 @@ impl SQL for LibMySQL {
                 return Err("Failed to run LibMySQL::table_exist!");
             }
         };
+        // info!("DEBUG: {:?}", rows);
         for row in &rows {
-            let i: i64 = row.get(0).unwrap();
+            // info!("DEBUG: {} row='{}' with length {}", tbl, row, row.len());
+            if row.len() == 0 {return Ok(false)}
+            let i: i64 = row.split("\t").nth(0).unwrap().parse::<i64>().unwrap();
             if i>0 {return Ok(true)}
         }
         Ok(false)
@@ -157,7 +161,7 @@ impl SQL for LibMySQL {
         let mut qry=format!("CREATE TABLE {}.{} (", skm, tbl);
         qry.push_str(tbl_str);
         qry.push_str(")");
-        info!("in LibMySQL::create_table() query is\n{}", qry);
+        // info!("in LibMySQL::create_table() query is\n{}", qry);
         match self.execute_queries_no_return(&qry){
             Ok(_) => Ok(()),
             Err(err) => {
@@ -218,24 +222,57 @@ impl SQL for LibMySQL {
                 return Err("load data infile failed");
             }
         };
+        info!("Delete local data file...");
+        match std::fs::remove_file(&tmp_file){
+            Ok(_) => (),
+            Err(err) => {
+                error!("Failed to delete local data file {}: {}", tmp_file, err);
+                return Err("Delete local data file failed!");
+            }
+        }
+        info!("Delete mysql data file...");
+        let output = std::process::Command::new("ssh")
+                         .arg("-i")
+                         .arg("/home/user/.ssh/ubuntu_sinnud.pem")
+                         .arg("sinnud@192.168.1.213")
+                         .arg("sudo")
+                         .arg("rm")
+                         .arg(&tmp_file)
+                         .output()
+                         .expect("failed to execute process");
+        if String::from_utf8_lossy(&output.stderr).len() > 0 {
+            error!("Failed ssh: {}", String::from_utf8_lossy(&output.stderr));
+            return Err("ssh failed.");
+        }
         Ok(())
     }
-}
-impl SQLret for LibMySQL {
-    type Row = mysql::Row;
     /** # submit query and catch the output
-     * output is vector of mysql::Row
+     * output is vector of String with [tab] as delimiter
      * Leave it to be handled by the following code
      */
-    fn execute_query_with_return(&mut self, qry: &str) -> Result<Vec<Self::Row>, &'static str>{
-        let vr = match self.conn.query(qry){
+    fn execute_query_with_return(&mut self, qry: &str) -> Result<Vec<String>, &'static str>{
+        let vr: Vec<mysql::Row> = match self.conn.query(qry){
             Ok(res) => res,
             Err(err) => {
-                error!("in LibMySQL::query(): {:?}", err);
+                error!("in MySQL::query(): {:?}", err);
                 return Err("Failed to run query!");
             }
         };
-        // info!("length of result: {}", vr.len());
-        Ok(vr)
+        let mut vs: Vec<String> = Vec::with_capacity(vr.len());
+        for row in &vr {
+            let mut line = String::new();
+            // println!("DEBUG Length of row: {}", row.len());
+            let clms=row.len();
+            for i in 0..clms {
+                let cstr: String = row.get(i).unwrap();
+                line.push_str(&cstr);
+                if i+1 < clms {
+                    line.push_str("\t");
+                }
+            }
+            vs.push(line);
+        }
+        // println!("DEBUG: {:?}", vs);
+        Ok(vs)
     }
 }

@@ -28,57 +28,52 @@ fn main()-> Result<(), &'static str>{
     
     //let mut wd=wdinfo::wdinfo::WDInfo::default();
     let pg=wdinfo::postgresql::PostgreSQL::default();
-    let mut wd=wdinfo::wdinfo::WDInfo::initialization(pg);
-
-    if opt.contains("music"){
-        wd.wdrefresh("/mnt/music", "wdinfo", "music243")?;
-        wd.wdrefresh("/mnt/public/music", "wdinfo", "music241")?;
-        wd.wdsync("wdinfo", "music243", "music241")?;
-    }
-
-    if opt.contains("data"){
-        wd.wdrefresh("/mnt/data", "wdinfo", "data243")?;
-        wd.wdrefresh("/mnt/public/data", "wdinfo", "data241")?;
-        wd.wdsync("wdinfo", "data243", "data241")?;
-    }
-
-    if opt.contains("photos"){
-        wd.wdrefresh("/mnt/photos", "wdinfo", "photos243")?;
-        wd.wdrefresh("/mnt/public/photos", "wdinfo", "photos241")?;
-        wd.wdsync("wdinfo", "photos243", "photos241")?;
-    }
-
-    if opt.contains("movie"){
-        wd.wdrefresh("/mnt/movie", "wdinfo", "movie243")?;
-
-        wd.wdrefresh("/mnt/public/newmovies", "wdinfo", "movie241")?;
-    }
-    
+    let mut wdpg=wdinfo::wdinfo::WDInfo::initialization(pg);
     let ms=wdinfo::libmysql::LibMySQL::default();
-    let mut wd=wdinfo::wdinfo::WDInfo::initialization(ms);
+    let mut wdms=wdinfo::wdinfo::WDInfo::initialization(ms);
 
     if opt.contains("music"){
-        wd.wdrefresh("/mnt/music", "wdinfo", "music243")?;
-        wd.wdrefresh("/mnt/public/music", "wdinfo", "music241")?;
-        // wd.wdsync("wdinfo", "music243", "music241")?;
+        let fs = wdpg.fs_scan("/mnt/music")?;
+        let fsc = fs.clone();
+        wdpg.wdrefresh(fs, "wdinfo", "music243")?;
+        wdms.wdrefresh(fsc, "wdinfo", "music243")?;
+        let fs = wdpg.fs_scan("/mnt/public/music")?;
+        let fsc = fs.clone();
+        wdpg.wdrefresh(fs, "wdinfo", "music241")?;
+        wdms.wdrefresh(fsc, "wdinfo", "music241")?;
+        wdpg.wdsync("wdinfo", "music243", "music241")?;
     }
-
     if opt.contains("data"){
-        wd.wdrefresh("/mnt/data", "wdinfo", "data243")?;
-        wd.wdrefresh("/mnt/public/data", "wdinfo", "data241")?;
-        // wd.wdsync("wdinfo", "data243", "data241")?;
+        let fs = wdpg.fs_scan("/mnt/data")?;
+        let fsc = fs.clone();
+        wdpg.wdrefresh(fs, "wdinfo", "data243")?;
+        wdms.wdrefresh(fsc, "wdinfo", "data243")?;
+        let fs = wdpg.fs_scan("/mnt/public/data")?;
+        let fsc = fs.clone();
+        wdpg.wdrefresh(fs, "wdinfo", "data241")?;
+        wdms.wdrefresh(fsc, "wdinfo", "data241")?;
+        wdpg.wdsync("wdinfo", "data243", "data241")?;
     }
-
     if opt.contains("photos"){
-        wd.wdrefresh("/mnt/photos", "wdinfo", "photos243")?;
-        wd.wdrefresh("/mnt/public/photos", "wdinfo", "photos241")?;
-        // wd.wdsync("wdinfo", "photos243", "photos241")?;
+        let fs = wdpg.fs_scan("/mnt/photos")?;
+        let fsc = fs.clone();
+        wdpg.wdrefresh(fs, "wdinfo", "photos243")?;
+        wdms.wdrefresh(fsc, "wdinfo", "photos243")?;
+        let fs = wdpg.fs_scan("/mnt/public/photos")?;
+        let fsc = fs.clone();
+        wdpg.wdrefresh(fs, "wdinfo", "photos241")?;
+        wdms.wdrefresh(fsc, "wdinfo", "photos241")?;
+        wdpg.wdsync("wdinfo", "photos243", "photos241")?;
     }
-
     if opt.contains("movie"){
-        wd.wdrefresh("/mnt/movie", "wdinfo", "movie243")?;
-
-        wd.wdrefresh("/mnt/public/newmovies", "wdinfo", "movie241")?;
+        let fs = wdpg.fs_scan("/mnt/movie")?;
+        let fsc = fs.clone();
+        wdpg.wdrefresh(fs, "wdinfo", "movie243")?;
+        wdms.wdrefresh(fsc, "wdinfo", "movie243")?;
+        let fs = wdpg.fs_scan("/mnt/public/newmovies")?;
+        let fsc = fs.clone();
+        wdpg.wdrefresh(fs, "wdinfo", "movie241")?;
+        wdms.wdrefresh(fsc, "wdinfo", "movie241")?;
     }
     Ok(())
 }

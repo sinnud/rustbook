@@ -53,11 +53,11 @@ impl<T: SQL> WDInfo<T> {
      */
     #[allow(dead_code)]
     pub fn wdrefresh(&mut self,
-        path: &str,
+        data: String,
         skm: &str,
         tbl: &str,
     ) -> Result<(), &'static str> {
-        match self.fs_import_pg(path){
+        match self.str_import_db(data){
             Ok(_) => (),
             Err(err) => {
                 error!("in WDInfo::wdfresh(): fs_import_pg {:?}", err);
@@ -70,7 +70,8 @@ impl<T: SQL> WDInfo<T> {
                 error!("in WDInfo::wdfresh(): wdinfo_refresh {:?}", err);
                 return Err("Failed to run WDInfo::wdfresh!");
             }
-        };    
+        };
+        info!("wdrefresh({}.{}) finished.", skm, tbl);
         Ok(())
     }
     /** # WD sync: sync WD net drive and PostgreSQL table based on records in tables
@@ -125,16 +126,16 @@ impl<T: SQL> WDInfo<T> {
         }
         Ok("check!!!".to_owned())
     }
-    /** # Check WD net drive, import FileStatus into PostgreSQL temporary table
+    /** # Scan WD net drive, get file structure summary
      * The time consuming function: log start and finish status
-     * call FileStatus::get_file_status_under_folder with dilimeter "|", then
+     * call FileStatus::get_file_status_under_folder with dilimeter "\t", then
      * call self.db.import_data with query using dilimeter "|"
      */
     #[allow(dead_code)]
-    pub fn fs_import_pg(&mut self,
+    pub fn fs_scan(&mut self,
         path: &str,
-    ) -> Result<(), &'static str> {
-        info!("in WDInfo::fs_import_pg({}) start...", path);
+    ) -> Result<String, &'static str> {
+        info!("in WDInfo::fs_scan({}) start...", path);
         // let mntpoint=if path contains "/public/" then "//192.168.1.241/" else "//192.168.1.243/";
         let mntpoint=if path.contains("/public/"){"//192.168.1.241/"} else {"//192.168.1.243/"};
         let fs=match FileStatus::get_file_status_under_folder(path, "\t", &mntpoint){
@@ -145,8 +146,16 @@ impl<T: SQL> WDInfo<T> {
             }
         };
         // Counting Newlines Really Fast code from https://llogiq.github.io/2016/09/24/newline.html
-        info!("in WDInfo::fs_import_pg() file number is {}", fs.as_bytes().iter().filter(|&&c| c == b'\n').count());
-        
+        info!("in WDInfo::fs_scan() file number is {}", fs.as_bytes().iter().filter(|&&c| c == b'\n').count());
+        info!("in WDInfo::fs_scan() finished!");
+        Ok(fs)
+    }
+    /** # import FileStatus into Database temporary table
+     */
+    #[allow(dead_code)]
+    pub fn str_import_db(&mut self,
+        fs: String,
+    ) -> Result<(), &'static str> {
         match self.db.create_truncate_table(&self.tmp_skm, &self.tmp_tbl, &self.tbl_str){
             Ok(_) => (),
             Err(err) => {
@@ -161,7 +170,6 @@ impl<T: SQL> WDInfo<T> {
                 return Err("Failed to run WDInfo::fs_import_pg!");
             }
         };
-        info!("in WDInfo::fs_import_pg() finished!");
         Ok(())
     }
     /** # update table using temporary table

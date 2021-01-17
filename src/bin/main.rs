@@ -1,7 +1,8 @@
 // #[macro_use]
 extern crate log;
 extern crate log4rs;
-
+#[allow(unused_imports)]
+use wdinfo::sqltrait::SQL;
 /** # main function executable program start from.
  
 - Use return Result<(), &'static str> such that ? operator can be used if error is &str.
@@ -25,8 +26,22 @@ fn main()-> Result<(), &'static str>{
 
     let opt=envargs()?;
     println!("Work on {}...", opt);
+    let vec: Vec<&str>=opt.split(" ").collect();
+    let mut tbllist=Vec::new();
+    for f in &vec {
+        tbllist.push(format!("{}241", f));
+        tbllist.push(format!("{}243", f));
+    }
     
-    //let mut wd=wdinfo::wdinfo::WDInfo::default();
+    /*
+    let gp=wdinfo::postgresql::PostgreSQL::new(
+        "192.168.1.213:4512".to_owned(),
+        "sinnud".to_owned(),
+        "password".to_owned(),
+        "mydb".to_owned(),
+    )?;
+    let mut wdgp=wdinfo::wdinfo::WDInfo::initialization(gp);
+    */
     let pg=wdinfo::postgresql::PostgreSQL::default();
     let mut wdpg=wdinfo::wdinfo::WDInfo::initialization(pg);
     let ms=wdinfo::libmysql::LibMySQL::default();
@@ -75,6 +90,7 @@ fn main()-> Result<(), &'static str>{
         wdpg.wdrefresh(fs, "wdinfo", "movie241")?;
         wdms.wdrefresh(fsc, "wdinfo", "movie241")?;
     }
+    
     Ok(())
 }
 /** # handle command line arguments

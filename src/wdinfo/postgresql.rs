@@ -1,4 +1,4 @@
-/*! PostgreSQL related functions and metods */
+/*! PostgreSQL related functions and methods */
 // postgresql
 // use postgres::{Client, NoTls};
 // use postgres::types::ToSql;

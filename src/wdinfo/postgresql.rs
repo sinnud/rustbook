@@ -8,6 +8,7 @@ use std::io::Write;
 // use trait
 use crate::sqltrait::SQL;
 
+use crate::pem;
 /** # PostgreSQL
  * Connect to PostgreSQL
  * Execute queries to PostgreSQL
@@ -26,8 +27,15 @@ impl Default for PostgreSQL {
      */
     #[allow(dead_code)]
     fn default() -> Self {
-        let pw_url=crate::sqltrait::url_encode("Jeffery45!@");
-        let constr=format!("postgresql://sinnud:{}@192.168.1.213/dbhuge", pw_url);
+        let filename="/mnt/public/data/other/pem/config_pg_sinnud";
+        let pem = pem::db_pem(filename).unwrap();
+        let ip = &pem[0];
+        // let port = &pem[1];
+        let database = &pem[2];
+        let username = &pem[3];
+        let password = &pem[4];
+        let pw_url=crate::sqltrait::url_encode(password);
+        let constr=format!("postgresql://{}:{}@{}/{}", username, pw_url, ip, database);
         PostgreSQL{
             conn: match postgres::Client::connect(&constr, postgres::NoTls){
                 Ok(pg) => pg,
@@ -223,7 +231,7 @@ mod tests {
         let qrystring="select 1".to_string();
         let qry=&qrystring[0..];
         let rst = pg.conn.query(qry, &[]).unwrap();
-        println!("{:#?}", rst);
+        info!("{:#?}", rst);
     }
     #[test]
     fn connect_to_dbhuge() {
@@ -237,6 +245,6 @@ mod tests {
                 std::process::exit(1);
             });
         let rst = pg.conn.query("select 1", &[]).unwrap();
-        println!("{:#?}", rst);
+        info!("{:#?}", rst);
     }
 }

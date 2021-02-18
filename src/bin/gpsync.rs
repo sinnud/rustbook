@@ -3,16 +3,42 @@ extern crate log;
 extern crate log4rs;
 #[allow(unused_imports)]
 use wdinfo::sqltrait::SQL;
-/** # main function executable program start from.
- 
-- Use return Result<(), &'static str> such that ? operator can be used if error is &str.
-- Assume log4rs.yaml file is stored under folder config
-under the same folder the executable program located `config/log4rs.yaml`.
-- Assume log folder is located the same folder the executable program located `log/wdinfo.log`.
-  - When the production (released) program is executed from other folder, log folder 
-    defined in log4rs.yaml need to manually created with full path
-  - log file will be archived using timestamp at the beginning of run.
-- Support command line arguments. See [envargs](./fn.envargs.html).
+/** # sync WDInfo tables from PostgreSQL into Greenplum in docker
+ * Greenplum in docker start (maybe merge then into docker and rust code later):
+ - ssh -i .ssh/ubuntu_sinnud.pem sinnud@192.168.1.213
+   - cd /var/local/docker/greenplum-oss-docker/gpdb
+   - sudo ./run_ossdocker.sh
+     - startGPDB.sh
+     - su - gpadmin
+       - psql
+         - create user sinnud WITH PASSWORD 'password';
+         - create database mydb;
+         - GRANT ALL PRIVILEGES ON  DATABASE mydb TO sinnud;
+         - ALTER USER sinnud WITH ENCRYPTED PASSWORD 'password';
+         - \q
+       - psql -U sinnud -h localhost -d mydb
+         - create schema wdinfo;
+         - \q
+ * After investigating docker, we can reduce the above command as: 
+  - ssh -i .ssh/ubuntu_sinnud.pem sinnud@192.168.1.213
+    - cd /var/local/docker/greenplum-oss-docker/gpdb
+    - make sure we have scripts folder with two files gpinit.bash and gpinit2.bash (see contents below)
+    - sudo ./run_ossdocker.sh &
+    - sudo docker exec -it gpdb5oss startGPDB.sh
+    - sudo docker exec -it gpdb5oss su - gpadmin /code/scripts/gpinit.bash
+    - sudo docker exec -it gpdb5oss su - gpadmin /code/scripts/gpinit2.bash
+    - content of gpinit.bash and gpinit2.bash
+```
+script file: gpinit.bash
+psql -c "create user sinnud WITH PASSWORD 'password';"
+psql -c "create database mydb;"
+psql -c "GRANT ALL PRIVILEGES ON  DATABASE mydb TO sinnud;"
+psql -c "ALTER USER sinnud WITH ENCRYPTED PASSWORD 'password';"
+```
+```
+script file: gpinit2.bash
+PGPASSWORD=password psql -U sinnud -h localhost -d mydb -c "create schema wdinfo;"
+```
  */
 fn main()-> Result<(), &'static str>{
     let root=wdinfo::file_status::log_config_path()?;
@@ -31,20 +57,25 @@ fn main()-> Result<(), &'static str>{
         tbllist.push(format!("{}241", f));
         tbllist.push(format!("{}243", f));
     }
-    
+    let filename="/mnt/public/data/other/pem/config_pg_sinnud";
+    let pem = wdinfo::pem::db_pem(filename).unwrap();
+    let ip = &pem[0];
+    let port = &pem[1];
+    let database = &pem[2];
+    let username = &pem[3];
+    let password = &pem[4];
     let mut iepg = wdinfo::ubuntu::DBinfo::init(
-        "192.168.1.213".to_owned(),
-        "5432".to_owned(), // PostgreSQL
-        "dbhuge".to_owned(),  // PostgreSQL
-        "sinnud".to_owned(),
-        "Jeffery45!@".to_owned(), // PostgreSQL
+        ip.to_string(), port.to_string(), database.to_string(), username.to_string(), password.to_string()
     )?;
+    let filename="/mnt/public/data/other/pem/config_pg_sinnud";
+    let pem = wdinfo::pem::db_pem(filename).unwrap();
+    let ip = &pem[0];
+    let port = &pem[1];
+    let database = &pem[2];
+    let username = &pem[3];
+    let password = &pem[4];
     let mut iegp = wdinfo::ubuntu::DBinfo::init(
-        "192.168.1.213".to_owned(),
-        "4512".to_owned(),    // Greenplum in docker
-        "mydb".to_owned(),    // Greenplum in docker
-        "sinnud".to_owned(),
-        "password".to_owned(),    // Greenplum in docker
+        ip.to_string(), port.to_string(), database.to_string(), username.to_string(), password.to_string()
     )?;
 
     let skm="wdinfo".to_owned();

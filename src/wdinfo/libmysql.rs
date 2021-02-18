@@ -13,6 +13,7 @@ use crate::sqltrait::url_encode;
 // use trait
 use crate::sqltrait::SQL;
 
+use crate::pem;
 /** # LibMySQL
  * Connect to MySQL
  * Execute queries to MySQL
@@ -31,8 +32,15 @@ impl Default for LibMySQL {
      */
     #[allow(dead_code)]
     fn default() -> Self {
-        let pw_url=url_encode("Jeffery45!@");
-        let constr=format!("mysql://sinnud:{}@192.168.1.213/wdinfo", pw_url);
+        let filename="/mnt/public/data/other/pem/config_ms_sinnud";
+        let pem = pem::db_pem(filename).unwrap();
+        let ip = &pem[0];
+        // let port = &pem[1];
+        let database = &pem[2];
+        let username = &pem[3];
+        let password = &pem[4];
+        let pw_url=url_encode(password);
+        let constr=format!("mysql://{}:{}@{}/{}", username, pw_url, ip, database);
         let pool = match mysql::Pool::new(&constr){
             Ok(res) => res,
             Err(err) => {

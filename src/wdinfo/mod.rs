@@ -10,4 +10,5 @@ pub mod postgresql;
 pub mod file_status;
 pub mod libmysql;
 pub mod ubuntu;
+pub mod pem;
 

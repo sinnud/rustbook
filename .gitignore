@@ -1,3 +1,6 @@
+# rust build folder
 /target
 # log files
 /log
+# VS code
+.vscode

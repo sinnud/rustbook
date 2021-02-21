@@ -17,6 +17,9 @@ log4rs = "*"
 mysql = "*"
 #md5 hash
 md5 = "*"
+# for csv file, used in src/wdinfo/pem.rs
+csv = "*"
+serde = "*"
 
 #--------------------------------------------#
 # compile command: cargo build --lib --bins  #

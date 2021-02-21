@@ -5,6 +5,10 @@
  * 
  */
 use std::io::BufRead;
+extern crate csv;
+
+use std::fs::File;
+
 pub fn db_pem(filename: &str) -> Result<Vec<String>, &'static str> {
     /*! # Giving pem file with pull path, read containt as pem info
      - ignore comment lines start with hash symbol
@@ -46,16 +50,53 @@ pub fn db_pem(filename: &str) -> Result<Vec<String>, &'static str> {
     Ok(vs)
 }
 
+use serde::Deserialize;
+#[derive(Deserialize)]
+struct Record {
+    name: String,
+    url: String,
+    username: String,
+    password: String,
+}
+pub fn web_login_from_csv(csvfile: &str, webname: &str) -> Result<Vec<String>, &'static str>{
+    /*! Get login information from password file in csv format
+     * password file have format of name,url,username,password
+     * the argument webname need to match with name in password file
+     * */
+    let mut vs: Vec<String> = Vec::with_capacity(2);
+    let file = File::open(csvfile).expect("Couldn't open input");
+    // let mut csv_file = csv::Reader::from_reader(file).delimiter(b'|').has_headers(false);
+    let mut reader = csv::Reader::from_reader(file);
+    for record in reader.deserialize() {
+        let record: Record = match record{
+            Ok(res) => res,
+            Err(err) => {
+                error!("In Pem::web_login_from_csv(), failed to get records from {}:\n{}", csvfile, err);
+                return Err("Failed to parse csv file!")
+            }
+        };
+        if record.name.contains(webname) {
+            let str = format!("{},{},{},{}", record.name, record.url, record.username, record.password);
+            vs.push(str);
+        }
+    }
+
+    Ok(vs)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
 
     #[test]
     fn check_file_containts() {
-        let filename="/home/user/.ssh/config_pg_sinnud";
-        let rst = db_pem(filename).unwrap();
-        println!("Ip is {}, port is {}, database is {}, username is {}, and password is '{}'.", rst[0], rst[1], rst[2], rst[3], rst[4]);
-        assert_eq!(filename, "~/.ssh/config_pg_sinnud");
+        let filename="/home/user/.ssh/password.csv";
+        // let rst = db_pem(filename).unwrap();
+        // println!("Ip is {}, port is {}, database is {}, username is {}, and password is '{}'.", rst[0], rst[1], rst[2], rst[3], rst[4]);
+        let webname = "citi";
+        let rst = web_login_from_csv(filename, webname).unwrap();
+        println!("{:#?}", rst);
+        assert_eq!(filename, "/home/user/.ssh/password.csv");
     }
 }
 

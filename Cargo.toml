@@ -14,7 +14,7 @@ log = "*"
 log4rs = "*"
 #log4rs-rolling-file = "*"
 # env_logger = "*"
-mysql = "*"
+mysql = "*"                  # connect to MySql
 #md5 hash
 md5 = "*"
 # for csv file, used in src/wdinfo/pem.rs

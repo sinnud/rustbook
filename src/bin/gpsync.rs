@@ -39,6 +39,28 @@ psql -c "ALTER USER sinnud WITH ENCRYPTED PASSWORD 'password';"
 script file: gpinit2.bash
 PGPASSWORD=password psql -U sinnud -h localhost -d mydb -c "create schema wdinfo;"
 ```
+ * When kochanpivotal/gpdb5oss failed to startGPDB.sh we can easily change to 
+ * projectairws/greenplum with port 4513 using script file run_airws.sh see below.
+ * Now the command is only:
+  - ssh -i .ssh/ubuntu_sinnud.pem sinnud@192.168.1.213
+    - cd /var/local/docker/airws_gp
+    - sudo ./run_airws.sh
+    - sudo docker exec -it greenplum su - gpadmin /code/scripts/gpinit.bash
+    - sudo docker exec -it greenplum su - gpadmin /code/scripts/gpinit2.bash
+```
+#!/bin/bash
+# script file run_airws.sh
+# user port 4513 and 89
+export VOLUME='/home/user/code'
+
+docker run  -it \
+    --name greenplum \
+    --publish 4513:5432 \
+    --publish 89:22 \
+    --volume ${VOLUME}:/code \
+    projectairws/greenplum
+```
+
  */
 fn main()-> Result<(), &'static str>{
     let root=wdinfo::file_status::log_config_path()?;
@@ -67,7 +89,7 @@ fn main()-> Result<(), &'static str>{
     let mut iepg = wdinfo::ubuntu::DBinfo::init(
         ip.to_string(), port.to_string(), database.to_string(), username.to_string(), password.to_string()
     )?;
-    let filename="/mnt/public/data/other/pem/config_pg_sinnud";
+    let filename="/mnt/public/data/other/pem/config_gp_sinnud";
     let pem = wdinfo::pem::db_pem(filename).unwrap();
     let ip = &pem[0];
     let port = &pem[1];

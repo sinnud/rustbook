@@ -4,3 +4,5 @@
 /log
 # VS code
 .vscode
+# GEANY
+rustbook.geany

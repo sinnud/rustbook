@@ -138,11 +138,51 @@ impl DBinfo{
                          .expect("failed to execute process");
         // info!("DEBUG stdout:\n{}", String::from_utf8_lossy(&output.stdout));
         if String::from_utf8_lossy(&output.stderr).len() > 0 {
-            error!("Failed export: {}", String::from_utf8_lossy(&output.stderr));
-            return Err("export failed.");
+            error!("Failed import: {}", String::from_utf8_lossy(&output.stderr));
+            return Err("import failed.");
         }
         info!("Finish importing {}.{} from {}.", skm, tbl, pathstr);
         Ok(())
+    }
+    /** check schema existance using psql
+     * 
+     * SELECT schema_name FROM information_schema.schemata WHERE schema_name = 'name'
+     * 
+     */
+    #[allow(dead_code)]
+    pub fn psql_chk_schema_exist(&mut self,
+                  skm: &str,
+    ) -> Result<bool, &'static str>{
+        let qry=format!("SELECT count(*) FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME='{}'",
+            skm, 
+        );
+        info!("DEBUG: qry is {}: {}", &self.password, qry);
+        let output = std::process::Command::new("psql")
+                         .env("PGPASSWORD", &self.password)
+                         .arg("-h")
+                         .arg(&self.host)
+                         .arg("-p")
+                         .arg(&self.port)
+                         .arg("-d")
+                         .arg(&self.database)
+                         .arg("-U")
+                         .arg(&self.username)
+                         .arg("-c")
+                         .arg(&qry)
+                         .output()
+                         .expect("failed to execute process");
+        // info!("DEBUG stdout:\n{}", String::from_utf8_lossy(&output.stdout));
+        if String::from_utf8_lossy(&output.stderr).len() > 0 {
+            error!("Failed checking schema existance: {}", String::from_utf8_lossy(&output.stderr));
+            return Err("checking schema existance failed.");
+        }
+        let out=String::from_utf8_lossy(&output.stdout);
+        let lines = out.lines();
+        let vec: Vec<&str> = lines.collect();
+        let res = vec[2].trim();
+        info!("Result: '{}'", res);
+        if res == "0" {return Ok(false)}
+        Ok(true)
     }
     /** check table exsitence using psql
      * Greenplum on remote server in docker
@@ -173,8 +213,8 @@ impl DBinfo{
                          .expect("failed to execute process");
         // info!("DEBUG stdout:\n{}", String::from_utf8_lossy(&output.stdout));
         if String::from_utf8_lossy(&output.stderr).len() > 0 {
-            error!("Failed export: {}", String::from_utf8_lossy(&output.stderr));
-            return Err("export failed.");
+            error!("Failed checking table existance: {}", String::from_utf8_lossy(&output.stderr));
+            return Err("checking table existance failed.");
         }
         let out=String::from_utf8_lossy(&output.stdout);
         let lines = out.lines();

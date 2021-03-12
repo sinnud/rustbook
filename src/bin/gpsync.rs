@@ -72,7 +72,13 @@ fn main()-> Result<(), &'static str>{
     wdinfo::file_status::rename_log_with_timestamp(&logfile)?;
     log4rs::init_file(&log4rs_yaml, Default::default()).unwrap();
 
-    prep()?;
+    match prep(){
+        Ok(()) => (),
+        Err(err) => {
+            println!("In gpsync, failed to call prep: {}", err);
+            return Err("Greemplum in Docker issue!!!");
+        }
+    };
 
     let opt="data music photos movie".to_owned();
     let vec: Vec<&str>=opt.split(" ").collect();
@@ -108,9 +114,9 @@ fn main()-> Result<(), &'static str>{
         Err(err) => {
             println!("Assume schema {} does not exist mean greenplum just run without initialzation.\n {}", skm, err);
             println!("Start initialize GP...");
-            let cmd = "docker exec -it greenplum su - gpadmin /code/scripts/gpinit.bash";
+            let cmd = "docker exec -tty greenplum su - gpadmin /code/scripts/gpinit.bash";
             docker_sudo_run_with_rst(cmd)?;
-            let cmd = "docker exec -it greenplum su - gpadmin /code/scripts/gpinit2.bash";
+            let cmd = "docker exec -tty greenplum su - gpadmin /code/scripts/gpinit2.bash";
             docker_sudo_run_with_rst(cmd)?;
             true
         }
@@ -170,11 +176,24 @@ pub fn prep() -> Result <(), &'static str> {
                 println!("Greenplum in docker is on!!!");
                 return Ok(())
             }
+            if strln.contains("Exited") {
+                println!("DEBUG: {}", strln);
+                println!("Greenplum in docker is exited!!!\nTry turn on...");
+                let cmd = "docker start greenplum";
+                match docker_sudo_run_with_rst(cmd){
+                    Ok(res) => res,
+                    Err(err) => {
+                        println!("In gpsync::prep(), failed to call {}:\n{}", cmd, err);
+                        return Err("Failed to turn on greenplum!");
+                    }
+                };
+                return Ok(())
+            }
         }
     }
     println!("Greenplum in docker is not on?");
     println!("HINT: submit /home/user/docker/airws_gp/run_airws.sh on 192.168.1.213 using sudo");
-    std::process::exit(1);
+    return Err("Issue of greenplum in docker!");
 }
 
 /** # send sudo command to 192.168.1.213 and capture the result

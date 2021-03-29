@@ -1,5 +1,5 @@
 /target
-
+/datatest
 # Let lib in the same repository
 /libs/*/.gitignore
 /libs/*/.git

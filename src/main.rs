@@ -1,4 +1,4 @@
-mod collatz;
+mod encrypt_decrypt;
 
 /** # main function executable program start from.
  
@@ -6,6 +6,5 @@ mod collatz;
 
  */
 fn main() {
-    //collatz::main();
-    collatz::reverse_collatz();
+    encrypt_decrypt::main();
 }

@@ -1,2 +1,2 @@
-# Collatz problem in Rust
-From the first problem in https://aml3.github.io/RustTutorial/
+# encryption decryption using XOR in Rust
+From the second problem in https://aml3.github.io/RustTutorial/

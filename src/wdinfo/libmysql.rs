@@ -27,12 +27,12 @@ pub struct LibMySQL{
 impl Default for LibMySQL {
     /** # default method
      * Use mysql::Pool method
-     * MySQL database installed in 192.168.1.213
+     * MySQL database installed in user-virtualbox
      */
     #[allow(dead_code)]
     fn default() -> Self {
         let pw_url=url_encode("Jeffery45!@");
-        let constr=format!("mysql://sinnud:{}@192.168.1.213/wdinfo", pw_url);
+        let constr=format!("mysql://sinnud:{}@user-virtualbox/wdinfo", pw_url);
         let pool = match mysql::Pool::new(&constr){
             Ok(res) => res,
             Err(err) => {
@@ -186,12 +186,12 @@ impl SQL for LibMySQL {
                        .expect("unable to create file");
         ofile.write_all(datastring.as_bytes()).expect("unable to write");
         info!("ftp to mysql workstation...");
-        //scp -i .ssh/ubuntu_user.pem dbeaver.desktop user@192.168.1.213:/tmp
+        //scp -i .ssh/ubuntu_user.pem dbeaver.desktop user@user-virtualbox:/tmp
         let output = std::process::Command::new("scp")
                          .arg("-i")
                          .arg("/home/user/.ssh/ubuntu_sinnud.pem")
                          .arg(&tmp_file)
-                         .arg("sinnud@192.168.1.213:/tmp")
+                         .arg("sinnud@user-virtualbox:/tmp")
                          .output()
                          .expect("failed to execute process");
         if String::from_utf8_lossy(&output.stderr).len() > 0 {
@@ -202,7 +202,7 @@ impl SQL for LibMySQL {
         let output = std::process::Command::new("ssh")
                          .arg("-i")
                          .arg("/home/user/.ssh/ubuntu_sinnud.pem")
-                         .arg("sinnud@192.168.1.213")
+                         .arg("sinnud@user-virtualbox")
                          .arg("sudo")
                          .arg("chown")
                          .arg("mysql.mysql")
@@ -234,7 +234,7 @@ impl SQL for LibMySQL {
         let output = std::process::Command::new("ssh")
                          .arg("-i")
                          .arg("/home/user/.ssh/ubuntu_sinnud.pem")
-                         .arg("sinnud@192.168.1.213")
+                         .arg("sinnud@user-virtualbox")
                          .arg("sudo")
                          .arg("rm")
                          .arg(&tmp_file)

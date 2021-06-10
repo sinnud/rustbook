@@ -22,12 +22,12 @@ pub struct PostgreSQL{
 impl Default for PostgreSQL {
     /** # default method
      * Use postgres::Client::connect method
-     * PostgreSQL database installed in 192.168.1.213
+     * PostgreSQL database installed in user-virtualbox
      */
     #[allow(dead_code)]
     fn default() -> Self {
         let pw_url=crate::sqltrait::url_encode("Jeffery45!@");
-        let constr=format!("postgresql://sinnud:{}@192.168.1.213/dbhuge", pw_url);
+        let constr=format!("postgresql://sinnud:{}@user-virtualbox/dbhuge", pw_url);
         PostgreSQL{
             conn: match postgres::Client::connect(&constr, postgres::NoTls){
                 Ok(pg) => pg,
@@ -228,7 +228,7 @@ mod tests {
     #[test]
     fn connect_to_dbhuge() {
         let mut pg=PostgreSQL::new(
-                "192.168.1.213".to_string(), // host
+                "user-virtualbox".to_string(), // host
                 "sinnud".to_string(),        // username
                 "Jeffery45!@".to_string(),   // password
                 "dbhuge".to_string(),        // database

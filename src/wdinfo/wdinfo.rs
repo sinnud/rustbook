@@ -1,5 +1,7 @@
 /*! WD sync tool
  * Use SQL and FileStatus
+ * Updates
+   - 17JUN2021-LD allow ignore failed copy when sync
  */
 
 // use trait
@@ -83,6 +85,7 @@ impl<T: SQL> WDInfo<T> {
         skm: &str,
         newtbl: &str,
         oldtbl: &str,
+        ignore_fail_copy: bool,
     ) -> Result<(), &'static str> {
         let pathlist = match self.wdinfo_compare(skm, newtbl, oldtbl){
             Ok(res) => res,
@@ -92,7 +95,7 @@ impl<T: SQL> WDInfo<T> {
             }
         };
         if pathlist.len()>0{
-            match self.wdinfo_sync(skm, newtbl, oldtbl, pathlist){
+            match self.wdinfo_sync(skm, newtbl, oldtbl, pathlist, ignore_fail_copy){
                 Ok(_) => (),
                 Err(err) => {
                     error!("in WDInfo::wdsync(): wdinfo_sync {:?}", err);
@@ -335,6 +338,7 @@ impl<T: SQL> WDInfo<T> {
         newtbl: &str,
         oldtbl: &str,
         pathlist: Vec<String>,
+        ignore_fail_copy: bool,
     ) -> Result<(), &'static str> {
         info!("Sync {} to {} start...", newtbl, oldtbl);
         for fullpath in pathlist{
@@ -342,6 +346,9 @@ impl<T: SQL> WDInfo<T> {
                 Ok(_) => (),
                 Err(err) => {
                     error!("In wdinfo_sync, wdinfo_sync_one({}) errored:\n{}", &fullpath, err);
+                    if ignore_fail_copy {
+                        continue;
+                    }
                     return Err("Failed to wdinfo_sync.");
                 }
             }

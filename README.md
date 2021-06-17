@@ -25,3 +25,4 @@ Use postgresql data base to handle WD net drives.
 - Build and run `cargo run`
 - Build documentation (only my code) `cargo doc --no-deps`
   - command to github.io: `ln -s /var/local/usersetting/gitdev/sinnud.github.io/rust_wdinfo/doc target/.`
+- Build clean `cargo clean`

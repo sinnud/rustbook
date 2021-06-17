@@ -12,6 +12,9 @@ under the same folder the executable program located `config/log4rs.yaml`.
     defined in log4rs.yaml need to manually created with full path
   - log file will be archived using timestamp at the beginning of run.
 - Support command line arguments. See [envargs](./fn.envargs.html).
+
+# updates
+- 17JUN2021-LD allow fail copy when sync
  */
 fn main()-> Result<(), &'static str>{
     let root=wdinfo::file_status::log_config_path()?;
@@ -41,7 +44,7 @@ fn main()-> Result<(), &'static str>{
         let fsc = fs.clone();
         wdpg.wdrefresh(fs, "wdinfo", "music241")?;
         wdms.wdrefresh(fsc, "wdinfo", "music241")?;
-        wdpg.wdsync("wdinfo", "music243", "music241")?;
+        wdpg.wdsync("wdinfo", "music243", "music241", true)?;
     }
     if opt.contains("data"){
         let fs = wdpg.fs_scan("/mnt/data")?;
@@ -52,7 +55,7 @@ fn main()-> Result<(), &'static str>{
         let fsc = fs.clone();
         wdpg.wdrefresh(fs, "wdinfo", "data241")?;
         wdms.wdrefresh(fsc, "wdinfo", "data241")?;
-        wdpg.wdsync("wdinfo", "data243", "data241")?;
+        wdpg.wdsync("wdinfo", "data243", "data241", true)?;
     }
     if opt.contains("photos"){
         let fs = wdpg.fs_scan("/mnt/photos")?;
@@ -63,7 +66,7 @@ fn main()-> Result<(), &'static str>{
         let fsc = fs.clone();
         wdpg.wdrefresh(fs, "wdinfo", "photos241")?;
         wdms.wdrefresh(fsc, "wdinfo", "photos241")?;
-        wdpg.wdsync("wdinfo", "photos243", "photos241")?;
+        wdpg.wdsync("wdinfo", "photos243", "photos241", true)?;
     }
     if opt.contains("movie"){
         let fs = wdpg.fs_scan("/mnt/movie")?;
